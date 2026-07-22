@@ -1,5 +1,5 @@
 modules = ["nodejs-20"]
-run = "cd bot && npm run dev"
+run = "npm run dev"
 
 [[ports]]
 localPort = 3001
@@ -8,3 +8,11 @@ externalPort = 80
 [[ports]]
 localPort = 3002
 externalPort = 3002
+
+[[ports]]
+localPort = 3010
+externalPort = 3000
+
+[deployment]
+build = ["npm", "run", "build"]
+run = ["npm", "run", "start"]
