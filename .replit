@@ -1,5 +1,10 @@
-[nix]
-channel = "stable-25_05"
+modules = ["nodejs-20"]
+run = "cd bot && npm run dev"
 
-[agent]
-expertMode = true
+[[ports]]
+localPort = 3001
+externalPort = 80
+
+[[ports]]
+localPort = 3002
+externalPort = 3002
