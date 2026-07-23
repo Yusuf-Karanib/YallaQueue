@@ -1,18 +1,16 @@
 modules = ["nodejs-20"]
 run = "npm run dev"
 
+[deployment]
+build = ["npm", "run", "build"]
+run = ["npm", "run", "start"]
+
 [[ports]]
-localPort = 3001
+localPort = 3000
 externalPort = 80
 
 [[ports]]
 localPort = 3002
-externalPort = 3002
 
 [[ports]]
 localPort = 3010
-externalPort = 3000
-
-[deployment]
-build = ["npm", "run", "build"]
-run = ["npm", "run", "start"]
