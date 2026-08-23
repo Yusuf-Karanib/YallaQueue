@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { SQSClient } from "@aws-sdk/client-sqs";
 import { QueueCraftPublisher } from "queuecraft";
-import crypto from "node:crypto";
+import {
+  extractBookingRequests,
+  verifyMetaSignature,
+} from "../../../lib/whatsapp-webhook";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -25,91 +28,6 @@ function getPublisher(): QueueCraftPublisher {
   }
 
   return publisher;
-}
-
-interface Booking {
-  phoneNumber: string;
-  requestedTime: string;
-  waMessageId?: string;
-}
-
-function extractBooking(payload: unknown): Booking | null {
-  const value = (payload as any)?.entry?.[0]?.changes?.[0]?.value;
-  const message = value?.messages?.[0];
-
-  // Valid status webhooks may not contain an incoming message.
-  if (!message) {
-    return null;
-  }
-
-  const phoneNumber: string | undefined =
-    message.from ?? value?.contacts?.[0]?.wa_id;
-
-  const requestedTime = extractText(message);
-
-  if (!phoneNumber || !requestedTime) {
-    return null;
-  }
-
-  return {
-    phoneNumber,
-    requestedTime,
-    waMessageId: message.id,
-  };
-}
-
-function extractText(message: any): string | undefined {
-  if (message.type === "text") {
-    return message.text?.body?.trim() || undefined;
-  }
-
-  if (message.type === "interactive") {
-    const interactive = message.interactive;
-
-    const label =
-      interactive?.button_reply?.title ??
-      interactive?.list_reply?.title;
-
-    return typeof label === "string"
-      ? label.trim() || undefined
-      : undefined;
-  }
-
-  return undefined;
-}
-
-function verifySignature(
-  rawBody: string,
-  signatureHeader: string | null,
-): boolean {
-  const appSecret = process.env.META_APP_SECRET;
-
-  if (!appSecret) {
-    throw new Error("META_APP_SECRET is not configured.");
-  }
-
-  if (!signatureHeader?.startsWith("sha256=")) {
-    return false;
-  }
-
-  const receivedHex = signatureHeader.slice("sha256=".length);
-
-  // A SHA-256 hexadecimal digest must contain exactly 64 hex characters.
-  if (!/^[a-f0-9]{64}$/i.test(receivedHex)) {
-    return false;
-  }
-
-  const expectedDigest = crypto
-    .createHmac("sha256", appSecret)
-    .update(rawBody, "utf8")
-    .digest();
-
-  const receivedDigest = Buffer.from(receivedHex, "hex");
-
-  return (
-    receivedDigest.length === expectedDigest.length &&
-    crypto.timingSafeEqual(receivedDigest, expectedDigest)
-  );
 }
 
 export function GET(req: NextRequest): NextResponse {
@@ -174,17 +92,6 @@ export async function POST(
 
   const signatureHeader = req.headers.get("x-hub-signature-256");
 
-  console.log("--- WEBHOOK POST RECEIVED ---");
-  console.log("Request information:", {
-    contentType: req.headers.get("content-type"),
-    contentLength: req.headers.get("content-length"),
-    userAgent: req.headers.get("user-agent"),
-    hasMetaSignature: Boolean(signatureHeader),
-    bodyLength: Buffer.byteLength(rawBody, "utf8"),
-  });
-
-  console.log("RAW BODY:", rawBody);
-
   if (!rawBody.trim()) {
     console.error("Webhook body was completely empty.");
 
@@ -194,23 +101,18 @@ export async function POST(
     );
   }
 
-  let validSignature: boolean;
+  const appSecret = process.env.META_APP_SECRET;
 
-  try {
-    validSignature = verifySignature(rawBody, signatureHeader);
-  } catch (error) {
-    console.error("Signature configuration error:", error);
-
+  if (!appSecret) {
+    console.error("META_APP_SECRET is not configured.");
     return NextResponse.json(
       { ok: false, error: "Server configuration error." },
       { status: 500 },
     );
   }
 
-  if (!validSignature) {
-    console.error(
-      "Signature verification failed. Check META_APP_SECRET and request headers.",
-    );
+  if (!verifyMetaSignature(rawBody, signatureHeader, appSecret)) {
+    console.error("Webhook signature verification failed.");
 
     return NextResponse.json(
       { ok: false, error: "Invalid signature." },
@@ -231,12 +133,10 @@ export async function POST(
     );
   }
 
-  const booking = extractBooking(payload);
-
-  console.log("EXTRACTED BOOKING DATA:", booking);
+  const bookings = extractBookingRequests(payload);
 
   // This could be a valid status update instead of an incoming message.
-  if (!booking) {
+  if (bookings.length === 0) {
     console.log("No supported incoming booking message was found.");
 
     return NextResponse.json(
@@ -246,15 +146,26 @@ export async function POST(
   }
 
   try {
-    await getPublisher().publish({
-      type: "booking_request",
-      phoneNumber: booking.phoneNumber,
-      requestedTime: booking.requestedTime,
-      waMessageId: booking.waMessageId,
-      receivedAt: Date.now(),
-    });
+    const receivedAt = Date.now();
 
-    console.log("Successfully published booking to AWS SQS.");
+    await Promise.all(
+      bookings.map((booking) =>
+        getPublisher().publish(
+          {
+            type: "booking_request",
+            phoneNumber: booking.phoneNumber,
+            requestedTime: booking.requestedTime,
+            waMessageId: booking.waMessageId,
+            receivedAt,
+          },
+          { idempotencyKey: booking.waMessageId },
+        ),
+      ),
+    );
+
+    console.log("Published WhatsApp booking messages to AWS SQS.", {
+      count: bookings.length,
+    });
   } catch (error) {
     console.error("QueueCraft publish failed:", error);
 
