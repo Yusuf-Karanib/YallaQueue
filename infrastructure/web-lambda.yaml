@@ -1,0 +1,147 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Public signed Meta webhook hosted as a throttled AWS Lambda container.
+
+Parameters:
+  WebImageUri:
+    Type: String
+    Description: Immutable ECR image URI including a digest.
+  QueueUrl:
+    Type: String
+    Description: QueueCraft SQS job queue URL.
+  QueueCraftProducerPolicyArn:
+    Type: String
+    Description: Producer policy ARN output by the QueueCraft stack.
+  ApplicationSecretArn:
+    Type: String
+    Description: Secrets Manager JSON secret containing META_VERIFY_TOKEN and META_APP_SECRET.
+  WebFunctionName:
+    Type: String
+    Default: yallaqueue-production-web
+    AllowedPattern: "[A-Za-z0-9-_]{1,64}"
+  ReservedConcurrency:
+    Type: Number
+    Default: 5
+    MinValue: 1
+    MaxValue: 20
+    Description: Caps webhook concurrency and limits unexpected spend.
+  AlarmTopicArn:
+    Type: String
+    Default: ""
+    Description: Optional SNS topic ARN that receives Lambda error alarms.
+
+Conditions:
+  HasAlarmTopic: !Not
+    - !Equals
+      - !Ref AlarmTopicArn
+      - ""
+
+Resources:
+  WebLogGroup:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${WebFunctionName}"
+      RetentionInDays: 30
+
+  WebExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - !Ref QueueCraftProducerPolicyArn
+      Policies:
+        - PolicyName: WriteFunctionLogs
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !Sub "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:${WebLogGroup}:*"
+
+  WebFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Ref WebFunctionName
+      PackageType: Image
+      Code:
+        ImageUri: !Ref WebImageUri
+      Architectures:
+        - x86_64
+      MemorySize: 1024
+      Timeout: 15
+      ReservedConcurrentExecutions: !Ref ReservedConcurrency
+      Role: !GetAtt WebExecutionRole.Arn
+      Environment:
+        Variables:
+          SQS_QUEUE_URL: !Ref QueueUrl
+          META_VERIFY_TOKEN: !Sub "{{resolve:secretsmanager:${ApplicationSecretArn}:SecretString:META_VERIFY_TOKEN}}"
+          META_APP_SECRET: !Sub "{{resolve:secretsmanager:${ApplicationSecretArn}:SecretString:META_APP_SECRET}}"
+
+  WebFunctionUrl:
+    Type: AWS::Lambda::Url
+    Properties:
+      AuthType: NONE
+      InvokeMode: BUFFERED
+      TargetFunctionArn: !GetAtt WebFunction.Arn
+
+  WebFunctionUrlPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunctionUrl
+      FunctionName: !Ref WebFunction
+      FunctionUrlAuthType: NONE
+      Principal: "*"
+
+  WebFunctionInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref WebFunction
+      InvokedViaFunctionUrl: true
+      Principal: "*"
+
+  WebErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub "${WebFunctionName}-errors"
+      AlarmDescription: The public YallaQueue webhook returned a Lambda execution error.
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref WebFunction
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      DatapointsToAlarm: 1
+      Threshold: 0
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: !If
+        - HasAlarmTopic
+        - - !Ref AlarmTopicArn
+        - !Ref AWS::NoValue
+
+Outputs:
+  WebFunctionName:
+    Value: !Ref WebFunction
+  WebhookBaseUrl:
+    Value: !GetAtt WebFunctionUrl.FunctionUrl
+  WebhookCallbackUrl:
+    Value: !Join
+      - ""
+      - - !GetAtt WebFunctionUrl.FunctionUrl
+        - api/webhook
+  WebLogGroupName:
+    Value: !Ref WebLogGroup
+  WebErrorAlarmName:
+    Value: !Ref WebErrorAlarm

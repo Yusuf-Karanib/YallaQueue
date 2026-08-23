@@ -38,6 +38,16 @@ Parameters:
     Default: 1
     MinValue: 0
     MaxValue: 2
+  AlarmTopicArn:
+    Type: String
+    Default: ""
+    Description: Optional SNS topic ARN that receives worker availability alarms.
+
+Conditions:
+  HasAlarmTopic: !Not
+    - !Equals
+      - !Ref AlarmTopicArn
+      - ""
 
 Resources:
   WorkerLogGroup:
@@ -174,6 +184,30 @@ Resources:
             - !Ref WorkerSecurityGroup
           Subnets: !Ref PublicSubnetIds
 
+  WorkerStoppedAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub "${AWS::StackName}-worker-stopped"
+      AlarmDescription: The YallaQueue worker has no running ECS task.
+      Namespace: ECS/ContainerInsights
+      MetricName: RunningTaskCount
+      Dimensions:
+        - Name: ClusterName
+          Value: !Ref WorkerCluster
+        - Name: ServiceName
+          Value: !GetAtt WorkerService.Name
+      Statistic: Minimum
+      Period: 60
+      EvaluationPeriods: 2
+      DatapointsToAlarm: 2
+      Threshold: 1
+      ComparisonOperator: LessThanThreshold
+      TreatMissingData: breaching
+      AlarmActions: !If
+        - HasAlarmTopic
+        - - !Ref AlarmTopicArn
+        - !Ref AWS::NoValue
+
 Outputs:
   ClusterName:
     Value: !Ref WorkerCluster
@@ -183,3 +217,5 @@ Outputs:
     Value: !GetAtt WorkerTaskRole.Arn
   WorkerLogGroupName:
     Value: !Ref WorkerLogGroup
+  WorkerStoppedAlarmName:
+    Value: !Ref WorkerStoppedAlarm

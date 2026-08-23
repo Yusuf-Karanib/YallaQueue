@@ -13,10 +13,13 @@ No production deployment should happen until every item is complete.
 ## AWS
 
 - The QueueCraft CloudFormation stack has created SQS, its dead-letter queue, and DynamoDB.
+- The web and worker images passed ECR scanning and use immutable commit tags or digests.
+- The public webhook uses the Lambda Function URL produced by `web-lambda.yaml`, not the stale Replit snapshot.
 - The web process has only `sqs:SendMessage` permission.
 - The worker has only the QueueCraft consumer permissions plus `ses:SendEmail` for the approved sender identity.
 - The SES sender identity is verified.
 - If SES is still in sandbox mode, the pilot barber email is also verified.
+- The AWS budget and billing alarms are enabled.
 
 ## Supabase
 
@@ -28,7 +31,9 @@ No production deployment should happen until every item is complete.
 ## Application
 
 - `npm test`, `npm run lint`, `npm run typecheck`, and `npm run build` pass.
+- The current Next.js security release has been checked immediately before deployment.
 - The web process and worker process are deployed separately.
+- `/api/health` returns `200` from the live Lambda URL.
 - The worker is configured to restart automatically.
 - A signed test webhook reaches SQS and produces one Supabase appointment.
 - The customer receives one WhatsApp confirmation and the barber receives one email.

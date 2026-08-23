@@ -12,6 +12,8 @@ YallaQueue is a WhatsApp appointment and queue system for a UAE barbershop pilot
 - Supabase booking storage with duplicate, overlap, working-hours, and queue-number protection
 - WhatsApp customer confirmations
 - AWS SES email alerts for the barber
+- Production templates for immutable container registries, a Lambda webhook,
+  ECS worker, alarms, logs, and least-privilege roles
 - Automated tests with no real cloud calls
 - No customer phone numbers or raw webhook bodies in application logs
 

@@ -1,16 +1,22 @@
-# Worker infrastructure
+# Production infrastructure
 
-`worker-service.yaml` prepares the long-running QueueCraft worker for AWS ECS Fargate. It is not deployed automatically.
+The templates prepare separate web and worker services. They are not deployed automatically.
 
-Before deployment:
+Deployment order:
 
-1. Build `Dockerfile.worker` and push an immutable image to Amazon ECR.
-2. Deploy the QueueCraft infrastructure stack first.
-3. Create one Secrets Manager JSON secret containing `SUPABASE_SERVICE_ROLE_KEY` and `META_ACCESS_TOKEN`.
-4. Verify the SES sender email or domain.
-5. Choose public subnets that route to an internet gateway. The worker has no inbound security-group rules.
-6. Review the estimated Fargate, CloudWatch, SQS, DynamoDB, Secrets Manager, and SES costs.
+1. Deploy `container-registry.yaml` to create immutable, scan-on-push ECR repositories.
+2. Deploy QueueCraft's `infrastructure/cloudformation.yaml`, including an `AlarmEmail`.
+3. Create one Secrets Manager JSON secret containing `META_VERIFY_TOKEN`, `META_APP_SECRET`, `SUPABASE_SERVICE_ROLE_KEY`, and `META_ACCESS_TOKEN`.
+4. Build `Dockerfile.web-lambda` and `Dockerfile.worker`, then push commit-tagged images to their ECR repositories.
+5. Deploy `web-lambda.yaml` using the web image digest and QueueCraft producer outputs.
+6. Verify the SES sender email or domain.
+7. Deploy `worker-service.yaml` using the worker image digest and QueueCraft consumer outputs.
+8. Pass QueueCraft's `AlarmTopicArn` to both application stacks.
+9. Choose public subnets that route to an internet gateway. The worker has no inbound security-group rules.
+10. Review the estimated Lambda, Fargate, CloudWatch, ECR, SQS, DynamoDB, Secrets Manager, SNS, and SES costs.
 
-The worker receives AWS permissions from its ECS task role. Do not put AWS access keys in the worker secret.
+The webhook runs behind a stable Lambda Function URL and checks Meta's signature before publishing. Reserved concurrency limits unexpected usage. The worker runs continuously on ECS Fargate.
 
-`Dockerfile.web` creates a portable standalone image for the Next.js webhook. The web and worker processes should be deployed separately.
+Both processes receive AWS permissions from execution roles. Do not put AWS access keys in the application secret. Updating a Secrets Manager value requires a CloudFormation update before Lambda receives the new value.
+
+`Dockerfile.web` remains a portable local container. `Dockerfile.web-lambda` adds AWS's Lambda Web Adapter for the production webhook.

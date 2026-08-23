@@ -6,14 +6,17 @@ YallaQueue is currently designed for one UAE pilot barbershop, while keeping sho
 Customer WhatsApp message
         |
         v
-Meta signed webhook --> Next.js /api/webhook --> AWS SQS
-                                                |
-                                                v
-                                      QueueCraft worker
-                                        |      |      |
-                                        v      v      v
-                                   Supabase  WhatsApp  AWS SES
-                                   booking   reply     barber email
+Meta signed webhook --> AWS Lambda Function URL --> Next.js /api/webhook
+                                                        |
+                                                        v
+                                                     AWS SQS
+                                                        |
+                                                        v
+                                              QueueCraft worker
+                                                |      |      |
+                                                v      v      v
+                                           Supabase  WhatsApp  AWS SES
+                                           booking   reply     barber email
 ```
 
 ## Ownership
@@ -22,6 +25,8 @@ Meta signed webhook --> Next.js /api/webhook --> AWS SQS
 - SQS holds unfinished work.
 - DynamoDB is used only by QueueCraft for worker leases and completed-job detection.
 - Meta message IDs connect webhook retries to the same logical job.
+- The public Lambda endpoint can only enqueue jobs. It cannot read bookings,
+  send WhatsApp replies, or send email.
 
 ## Booking safety
 
