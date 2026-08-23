@@ -3,8 +3,9 @@ import crypto from "node:crypto";
 type JsonObject = Record<string, unknown>;
 
 export interface BookingRequest {
-  phoneNumber: string;
-  requestedTime: string;
+  businessPhoneNumberId: string;
+  customerPhoneNumber: string;
+  messageText: string;
   waMessageId: string;
 }
 
@@ -57,6 +58,8 @@ export function extractBookingRequests(payload: unknown): BookingRequest[] {
     for (const changeValue of asArray(entry?.changes)) {
       const change = asObject(changeValue);
       const value = asObject(change?.value);
+      const metadata = asObject(value?.metadata);
+      const businessPhoneNumberId = nonEmptyString(metadata?.phone_number_id);
       const firstContact = asObject(asArray(value?.contacts)[0]);
       const contactPhoneNumber = nonEmptyString(firstContact?.wa_id);
 
@@ -68,21 +71,27 @@ export function extractBookingRequests(payload: unknown): BookingRequest[] {
         }
 
         const waMessageId = nonEmptyString(message.id);
-        const phoneNumber =
+        const customerPhoneNumber =
           nonEmptyString(message.from) ?? contactPhoneNumber;
-        const requestedTime = extractMessageText(message);
+        const messageText = extractMessageText(message);
 
         if (
+          !businessPhoneNumberId ||
           !waMessageId ||
-          !phoneNumber ||
-          !requestedTime ||
+          !customerPhoneNumber ||
+          !messageText ||
           seenMessageIds.has(waMessageId)
         ) {
           continue;
         }
 
         seenMessageIds.add(waMessageId);
-        bookings.push({ phoneNumber, requestedTime, waMessageId });
+        bookings.push({
+          businessPhoneNumberId,
+          customerPhoneNumber,
+          messageText,
+          waMessageId,
+        });
       }
     }
   }

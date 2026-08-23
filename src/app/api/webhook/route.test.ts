@@ -84,6 +84,7 @@ describe("WhatsApp webhook", () => {
           changes: [
             {
               value: {
+                metadata: { phone_number_id: "meta-business-number-1" },
                 contacts: [{ wa_id: "971500000000" }],
                 messages: [
                   {
@@ -114,8 +115,9 @@ describe("WhatsApp webhook", () => {
     expect(mocks.publish).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining({
-        phoneNumber: "971511111111",
-        requestedTime: "Tomorrow at 3 PM",
+        businessPhoneNumberId: "meta-business-number-1",
+        customerPhoneNumber: "971511111111",
+        messageText: "Tomorrow at 3 PM",
         waMessageId: "wamid.text-1",
       }),
       { idempotencyKey: "wamid.text-1" },
@@ -123,8 +125,9 @@ describe("WhatsApp webhook", () => {
     expect(mocks.publish).toHaveBeenNthCalledWith(
       2,
       expect.objectContaining({
-        phoneNumber: "971500000000",
-        requestedTime: "Sunday at 10 AM",
+        businessPhoneNumberId: "meta-business-number-1",
+        customerPhoneNumber: "971500000000",
+        messageText: "Sunday at 10 AM",
         waMessageId: "wamid.list-2",
       }),
       { idempotencyKey: "wamid.list-2" },

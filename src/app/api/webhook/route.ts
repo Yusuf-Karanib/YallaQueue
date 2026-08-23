@@ -153,8 +153,9 @@ export async function POST(
         getPublisher().publish(
           {
             type: "booking_request",
-            phoneNumber: booking.phoneNumber,
-            requestedTime: booking.requestedTime,
+            businessPhoneNumberId: booking.businessPhoneNumberId,
+            customerPhoneNumber: booking.customerPhoneNumber,
+            messageText: booking.messageText,
             waMessageId: booking.waMessageId,
             receivedAt,
           },

@@ -1,33 +1,36 @@
 # YallaQueue
 
-YallaQueue is an early-stage WhatsApp booking demo. Its webhook verifies requests from Meta and safely places supported incoming messages onto AWS SQS through QueueCraft.
+YallaQueue is a WhatsApp appointment and queue system for a UAE barbershop pilot.
 
-## What works
+## Implemented
 
-- Meta webhook verification with `GET /api/webhook`
-- SHA-256 signature verification for webhook `POST` requests
-- Text, button, and list-reply message extraction
-- Batched webhook message handling
-- Stable QueueCraft idempotency keys based on Meta message IDs
-- No raw webhook body or customer phone number logging
+- Signed Meta webhook verification and message ingestion
+- Batched text, button, and list-reply handling
+- Stable QueueCraft jobs based on Meta message IDs
+- A long-running QueueCraft worker with safe shutdown and retry handling
+- English natural-language date and time parsing
+- Supabase booking storage with duplicate, overlap, working-hours, and queue-number protection
+- WhatsApp customer confirmations
+- AWS SES email alerts for the barber
+- Automated tests with no real cloud calls
+- No customer phone numbers or raw webhook bodies in application logs
 
-## What is not built yet
+## Not deployed yet
 
-- The worker that consumes booking jobs
-- Booking time parsing and validation
-- A database for bookings
-- WhatsApp replies to customers
-- An admin dashboard
-- AWS or application deployment
+The code is production-shaped, but no Supabase schema, AWS resource, Meta token, or email sender has been connected to a live account yet.
 
 ## Local setup
 
-1. Copy `.env.example` to `.env.local`.
-2. Fill in the Meta and AWS values.
-3. Run `npm install`.
-4. Run `npm run dev`.
+1. Copy `.env.example` to `.env.local` and fill in the values.
+2. Run `npm install`.
+3. Run the web process with `npm run dev`.
+4. Run the worker separately with `npm run worker:local`.
 
-Do not commit `.env.local` or AWS secrets.
+Do not commit `.env.local`, the Supabase service-role key, Meta tokens, or AWS secrets.
+
+## Database
+
+Follow `supabase/README.md` to apply the schema and insert the pilot shop.
 
 ## Checks
 
@@ -37,3 +40,5 @@ npm run lint
 npm run typecheck
 npm run build
 ```
+
+See `docs/architecture.md` for the system design and `docs/deployment-checklist.md` before using a real barbershop account.

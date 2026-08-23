@@ -1,0 +1,185 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: YallaQueue QueueCraft worker running as a private-ingress ECS Fargate service.
+
+Parameters:
+  WorkerImageUri:
+    Type: String
+    Description: Immutable ECR image URI including a tag or digest.
+  QueueUrl:
+    Type: String
+    Description: QueueCraft SQS job queue URL.
+  DynamoTableName:
+    Type: String
+    Description: QueueCraft DynamoDB idempotency table name.
+  QueueCraftConsumerPolicyArn:
+    Type: String
+    Description: Consumer policy ARN output by the QueueCraft stack.
+  SupabaseUrl:
+    Type: String
+    AllowedPattern: ^https://.+$
+  WorkerSecretArn:
+    Type: String
+    Description: Secrets Manager JSON secret containing SUPABASE_SERVICE_ROLE_KEY and META_ACCESS_TOKEN.
+  MetaGraphApiVersion:
+    Type: String
+    AllowedPattern: ^v[0-9]+\.[0-9]+$
+  SesFromEmail:
+    Type: String
+  SesIdentityArn:
+    Type: String
+    Description: Verified SES email or domain identity ARN used by the worker.
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+  PublicSubnetIds:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: At least two public subnets with routes to an internet gateway.
+  DesiredCount:
+    Type: Number
+    Default: 1
+    MinValue: 0
+    MaxValue: 2
+
+Resources:
+  WorkerLogGroup:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      LogGroupName: !Sub /yallaqueue/${AWS::StackName}/worker
+      RetentionInDays: 30
+
+  WorkerExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+      Policies:
+        - PolicyName: ReadWorkerSecrets
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: secretsmanager:GetSecretValue
+                Resource: !Ref WorkerSecretArn
+
+  WorkerTaskRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - !Ref QueueCraftConsumerPolicyArn
+      Policies:
+        - PolicyName: SendBarberEmail
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: ses:SendEmail
+                Resource: !Ref SesIdentityArn
+
+  WorkerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: YallaQueue worker outbound access with no inbound rules.
+      VpcId: !Ref VpcId
+      SecurityGroupEgress:
+        - IpProtocol: "-1"
+          CidrIp: 0.0.0.0/0
+
+  WorkerCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: !Sub ${AWS::StackName}-worker
+      ClusterSettings:
+        - Name: containerInsights
+          Value: enabled
+
+  WorkerTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Sub ${AWS::StackName}-worker
+      Cpu: "256"
+      Memory: "512"
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      RuntimePlatform:
+        CpuArchitecture: X86_64
+        OperatingSystemFamily: LINUX
+      ExecutionRoleArn: !GetAtt WorkerExecutionRole.Arn
+      TaskRoleArn: !GetAtt WorkerTaskRole.Arn
+      ContainerDefinitions:
+        - Name: worker
+          Essential: true
+          Image: !Ref WorkerImageUri
+          Environment:
+            - Name: AWS_REGION
+              Value: !Ref AWS::Region
+            - Name: SQS_QUEUE_URL
+              Value: !Ref QueueUrl
+            - Name: DYNAMODB_TABLE_NAME
+              Value: !Ref DynamoTableName
+            - Name: SUPABASE_URL
+              Value: !Ref SupabaseUrl
+            - Name: META_GRAPH_API_VERSION
+              Value: !Ref MetaGraphApiVersion
+            - Name: SES_FROM_EMAIL
+              Value: !Ref SesFromEmail
+            - Name: WORKER_CONCURRENCY
+              Value: "5"
+            - Name: WORKER_VISIBILITY_TIMEOUT_SECONDS
+              Value: "60"
+            - Name: WORKER_HEARTBEAT_INTERVAL_MS
+              Value: "20000"
+          Secrets:
+            - Name: SUPABASE_SERVICE_ROLE_KEY
+              ValueFrom: !Sub "${WorkerSecretArn}:SUPABASE_SERVICE_ROLE_KEY::"
+            - Name: META_ACCESS_TOKEN
+              ValueFrom: !Sub "${WorkerSecretArn}:META_ACCESS_TOKEN::"
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref WorkerLogGroup
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: worker
+
+  WorkerService:
+    Type: AWS::ECS::Service
+    Properties:
+      Cluster: !Ref WorkerCluster
+      DesiredCount: !Ref DesiredCount
+      EnableExecuteCommand: false
+      LaunchType: FARGATE
+      TaskDefinition: !Ref WorkerTaskDefinition
+      DeploymentConfiguration:
+        MinimumHealthyPercent: 0
+        MaximumPercent: 100
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          SecurityGroups:
+            - !Ref WorkerSecurityGroup
+          Subnets: !Ref PublicSubnetIds
+
+Outputs:
+  ClusterName:
+    Value: !Ref WorkerCluster
+  ServiceName:
+    Value: !GetAtt WorkerService.Name
+  TaskRoleArn:
+    Value: !GetAtt WorkerTaskRole.Arn
+  WorkerLogGroupName:
+    Value: !Ref WorkerLogGroup

@@ -2,20 +2,31 @@
   "name": "bot",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=20.9.0"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "worker": "tsx src/worker/index.ts",
+    "worker:local": "node --env-file=.env.local --import tsx src/worker/index.ts",
     "lint": "eslint",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.1116.0",
+    "@aws-sdk/client-sesv2": "^3.1116.0",
     "@aws-sdk/client-sqs": "^3.1093.0",
-    "next": "16.2.11",
+    "@supabase/supabase-js": "^2.112.3",
+    "chrono-node": "^2.10.1",
+    "next": "16.3.2",
     "queuecraft": "https://github.com/Yusuf-Karanib/QueueCraft/archive/46853482a574605e6323ee1a36021402efdafe1a.tar.gz",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "tsx": "^4.23.12",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
@@ -23,7 +34,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "16.2.11",
+    "eslint-config-next": "16.3.2",
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^3.2.4"
