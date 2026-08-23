@@ -12,6 +12,7 @@ No production deployment should happen until every item is complete.
 
 ## AWS
 
+- All stacks use `eu-central-1` while AWS's UAE-region migration recommendation remains active.
 - The QueueCraft CloudFormation stack has created SQS, its dead-letter queue, and DynamoDB.
 - The web and worker images passed ECR scanning and use immutable commit tags or digests.
 - The public webhook uses the Lambda Function URL produced by `web-lambda.yaml`, not the stale Replit snapshot.

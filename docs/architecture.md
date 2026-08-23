@@ -2,6 +2,8 @@
 
 YallaQueue is currently designed for one UAE pilot barbershop, while keeping shop data separated so more shops can be added later.
 
+The pilot AWS services are deployed in Frankfurt (`eu-central-1`) while AWS's UAE Region remains disrupted. The booking timezone remains `Asia/Dubai`; infrastructure location does not change appointment times.
+
 ```text
 Customer WhatsApp message
         |
