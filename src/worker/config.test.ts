@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { loadWorkerConfig } from "./config";
+import { loadLambdaWorkerConfig, loadWorkerConfig } from "./config";
 
 const validEnvironment = {
   AWS_REGION: "me-central-1",
@@ -19,6 +19,15 @@ describe("loadWorkerConfig", () => {
     expect(config.WORKER_CONCURRENCY).toBe(5);
     expect(config.WORKER_VISIBILITY_TIMEOUT_SECONDS).toBe(60);
     expect(config.WORKER_HEARTBEAT_INTERVAL_MS).toBe(20_000);
+  });
+
+  it("loads Lambda dependencies without long-poller settings", () => {
+    const lambdaEnvironment: Record<string, string> = { ...validEnvironment };
+    delete lambdaEnvironment.SQS_QUEUE_URL;
+    const config = loadLambdaWorkerConfig(lambdaEnvironment);
+
+    expect(config.AWS_REGION).toBe("me-central-1");
+    expect(config).not.toHaveProperty("WORKER_CONCURRENCY");
   });
 
   it("reports missing field names without exposing secret values", () => {

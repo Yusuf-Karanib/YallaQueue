@@ -17,7 +17,7 @@ No production deployment should happen until every item is complete.
 - The web and worker images passed ECR scanning and use immutable commit tags or digests.
 - The public webhook uses the Lambda Function URL produced by `web-lambda.yaml`, not the stale Replit snapshot.
 - The web process has only `sqs:SendMessage` permission.
-- The worker has only the QueueCraft consumer permissions plus `ses:SendEmail` for the approved sender identity.
+- The Lambda worker has only the QueueCraft consumer permissions plus `ses:SendEmail` for the approved sender identity.
 - The SES sender identity is verified.
 - If SES is still in sandbox mode, the pilot barber email is also verified.
 - The AWS budget and billing alarms are enabled.
@@ -35,7 +35,7 @@ No production deployment should happen until every item is complete.
 - The current Next.js security release has been checked immediately before deployment.
 - The web process and worker process are deployed separately.
 - `/api/health` returns `200` from the live Lambda URL.
-- The worker is configured to restart automatically.
+- The SQS event source is enabled with partial-batch failure reporting.
 - A signed test webhook reaches SQS and produces one Supabase appointment.
 - The customer receives one WhatsApp confirmation and the barber receives one email.
 - A duplicate webhook does not create a second appointment.

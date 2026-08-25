@@ -1,14 +1,17 @@
 import { z } from "zod";
 
-const workerConfigSchema = z.object({
+const workerDependencyConfigSchema = z.object({
   AWS_REGION: z.string().trim().min(1),
-  SQS_QUEUE_URL: z.url(),
   DYNAMODB_TABLE_NAME: z.string().trim().min(3),
   SUPABASE_URL: z.url(),
   SUPABASE_SERVICE_ROLE_KEY: z.string().trim().min(20),
   META_ACCESS_TOKEN: z.string().trim().min(20),
   META_GRAPH_API_VERSION: z.string().trim().regex(/^v\d+\.\d+$/),
   SES_FROM_EMAIL: z.email(),
+});
+
+const workerConfigSchema = workerDependencyConfigSchema.extend({
+  SQS_QUEUE_URL: z.url(),
   WORKER_CONCURRENCY: z.coerce.number().int().min(1).max(50).default(5),
   WORKER_POLL_INTERVAL_MS: z.coerce.number().int().min(0).max(60_000).default(1_000),
   WORKER_WAIT_TIME_SECONDS: z.coerce.number().int().min(0).max(20).default(20),
@@ -27,11 +30,13 @@ const workerConfigSchema = z.object({
 });
 
 export type WorkerConfig = z.infer<typeof workerConfigSchema>;
+export type LambdaWorkerConfig = z.infer<typeof workerDependencyConfigSchema>;
 
-export function loadWorkerConfig(
+function parseConfiguration<T>(
+  schema: z.ZodType<T>,
   environment: Record<string, string | undefined>,
-): WorkerConfig {
-  const result = workerConfigSchema.safeParse(environment);
+): T {
+  const result = schema.safeParse(environment);
 
   if (!result.success) {
     const fields = [
@@ -42,14 +47,28 @@ export function loadWorkerConfig(
     throw new Error(`Invalid worker configuration: ${fields.join(", ")}.`);
   }
 
+  return result.data;
+}
+
+export function loadWorkerConfig(
+  environment: Record<string, string | undefined>,
+): WorkerConfig {
+  const config = parseConfiguration(workerConfigSchema, environment);
+
   if (
-    result.data.WORKER_HEARTBEAT_INTERVAL_MS >=
-    result.data.WORKER_VISIBILITY_TIMEOUT_SECONDS * 1_000
+    config.WORKER_HEARTBEAT_INTERVAL_MS >=
+    config.WORKER_VISIBILITY_TIMEOUT_SECONDS * 1_000
   ) {
     throw new Error(
       "WORKER_HEARTBEAT_INTERVAL_MS must be shorter than the visibility timeout.",
     );
   }
 
-  return result.data;
+  return config;
+}
+
+export function loadLambdaWorkerConfig(
+  environment: Record<string, string | undefined>,
+): LambdaWorkerConfig {
+  return parseConfiguration(workerDependencyConfigSchema, environment);
 }

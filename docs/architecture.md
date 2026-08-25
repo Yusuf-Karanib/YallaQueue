@@ -14,7 +14,7 @@ Meta signed webhook --> AWS Lambda Function URL --> Next.js /api/webhook
                                                      AWS SQS
                                                         |
                                                         v
-                                              QueueCraft worker
+                                     QueueCraft Lambda worker (on demand)
                                                 |      |      |
                                                 v      v      v
                                            Supabase  WhatsApp  AWS SES
@@ -29,6 +29,8 @@ Meta signed webhook --> AWS Lambda Function URL --> Next.js /api/webhook
 - Meta message IDs connect webhook retries to the same logical job.
 - The public Lambda endpoint can only enqueue jobs. It cannot read bookings,
   send WhatsApp replies, or send email.
+- The booking worker costs nothing while the queue is empty. SQS wakes it only
+  when a booking job arrives.
 
 ## Booking safety
 

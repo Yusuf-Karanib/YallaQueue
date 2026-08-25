@@ -23,7 +23,7 @@
     "@supabase/supabase-js": "^2.112.3",
     "chrono-node": "^2.10.1",
     "next": "16.3.2",
-    "queuecraft": "https://github.com/Yusuf-Karanib/QueueCraft/archive/509e7565a1af4ec7719785b3b5620280042f11c3.tar.gz",
+    "queuecraft": "https://github.com/Yusuf-Karanib/QueueCraft/archive/43704ed0a296c76a39fec5c2f4540214e43ed3f5.tar.gz",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "tsx": "^4.23.12",

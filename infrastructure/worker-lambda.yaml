@@ -1,0 +1,155 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Event-driven YallaQueue booking worker using SQS and AWS Lambda.
+
+Parameters:
+  WorkerImageUri:
+    Type: String
+    Description: Immutable ECR image URI including a digest.
+  QueueArn:
+    Type: String
+    Description: QueueCraft job queue ARN.
+  DynamoTableName:
+    Type: String
+    Description: QueueCraft DynamoDB idempotency table name.
+  QueueCraftConsumerPolicyArn:
+    Type: String
+    Description: Consumer policy ARN output by the QueueCraft stack.
+  SupabaseUrl:
+    Type: String
+    AllowedPattern: ^https://.+$
+  ApplicationSecretArn:
+    Type: String
+    Description: Secrets Manager JSON secret containing SUPABASE_SERVICE_ROLE_KEY and META_ACCESS_TOKEN.
+  MetaGraphApiVersion:
+    Type: String
+    AllowedPattern: ^v[0-9]+\.[0-9]+$
+  SesFromEmail:
+    Type: String
+  SesIdentityArn:
+    Type: String
+    Description: Verified SES email or domain identity ARN used by the worker.
+  WorkerFunctionName:
+    Type: String
+    Default: yallaqueue-production-worker
+    AllowedPattern: "[A-Za-z0-9-_]{1,64}"
+  BatchSize:
+    Type: Number
+    Default: 5
+    MinValue: 1
+    MaxValue: 10
+  MaximumConcurrency:
+    Type: Number
+    Default: 2
+    MinValue: 2
+    MaxValue: 10
+  AlarmTopicArn:
+    Type: String
+    Default: ""
+    Description: Optional SNS topic ARN that receives worker error alarms.
+
+Conditions:
+  HasAlarmTopic: !Not
+    - !Equals
+      - !Ref AlarmTopicArn
+      - ""
+
+Resources:
+  WorkerLogGroup:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${WorkerFunctionName}"
+      RetentionInDays: 30
+
+  WorkerExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - !Ref QueueCraftConsumerPolicyArn
+      Policies:
+        - PolicyName: WorkerApplicationAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: SendBarberEmail
+                Effect: Allow
+                Action: ses:SendEmail
+                Resource: !Ref SesIdentityArn
+              - Sid: WriteFunctionLogs
+                Effect: Allow
+                Action:
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !Sub "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:${WorkerLogGroup}:*"
+
+  WorkerFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Ref WorkerFunctionName
+      PackageType: Image
+      Code:
+        ImageUri: !Ref WorkerImageUri
+      Architectures:
+        - x86_64
+      MemorySize: 512
+      Timeout: 30
+      Role: !GetAtt WorkerExecutionRole.Arn
+      Environment:
+        Variables:
+          DYNAMODB_TABLE_NAME: !Ref DynamoTableName
+          SUPABASE_URL: !Ref SupabaseUrl
+          SUPABASE_SERVICE_ROLE_KEY: !Sub "{{resolve:secretsmanager:${ApplicationSecretArn}:SecretString:SUPABASE_SERVICE_ROLE_KEY}}"
+          META_ACCESS_TOKEN: !Sub "{{resolve:secretsmanager:${ApplicationSecretArn}:SecretString:META_ACCESS_TOKEN}}"
+          META_GRAPH_API_VERSION: !Ref MetaGraphApiVersion
+          SES_FROM_EMAIL: !Ref SesFromEmail
+
+  WorkerEventSource:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      EventSourceArn: !Ref QueueArn
+      FunctionName: !Ref WorkerFunction
+      Enabled: true
+      BatchSize: !Ref BatchSize
+      MaximumBatchingWindowInSeconds: 0
+      FunctionResponseTypes:
+        - ReportBatchItemFailures
+      ScalingConfig:
+        MaximumConcurrency: !Ref MaximumConcurrency
+
+  WorkerErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub "${WorkerFunctionName}-errors"
+      AlarmDescription: The event-driven YallaQueue booking worker returned an execution error.
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref WorkerFunction
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      DatapointsToAlarm: 1
+      Threshold: 0
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: !If
+        - HasAlarmTopic
+        - - !Ref AlarmTopicArn
+        - !Ref AWS::NoValue
+
+Outputs:
+  WorkerFunctionName:
+    Value: !Ref WorkerFunction
+  WorkerLogGroupName:
+    Value: !Ref WorkerLogGroup
+  WorkerErrorAlarmName:
+    Value: !Ref WorkerErrorAlarm
