@@ -20,7 +20,7 @@ Deployment order:
 
 The webhook runs behind a stable Lambda Function URL and checks Meta's signature before publishing. SQS starts the booking worker only when a job exists, so there is no continuously running server or public IPv4 charge.
 
-Both processes receive AWS permissions from execution roles. Do not put AWS access keys in the application secret. Updating a Secrets Manager value requires a CloudFormation update before Lambda receives the new value.
+Both processes receive AWS permissions from execution roles. Do not put AWS access keys in the application secret. After updating a Secrets Manager value, increment the corresponding stack's `ApplicationSecretVersion` parameter so Lambda receives the new value.
 
 `Dockerfile.web` remains a portable local container. `Dockerfile.web-lambda` adds AWS's Lambda Web Adapter for the production webhook.
 

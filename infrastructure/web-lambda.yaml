@@ -14,6 +14,10 @@ Parameters:
   ApplicationSecretArn:
     Type: String
     Description: Secrets Manager JSON secret containing META_VERIFY_TOKEN and META_APP_SECRET.
+  ApplicationSecretVersion:
+    Type: String
+    Default: "1"
+    Description: Change this value after updating the application secret so Lambda refreshes its environment.
   WebFunctionName:
     Type: String
     Default: yallaqueue-production-web
@@ -76,6 +80,7 @@ Resources:
       Environment:
         Variables:
           SQS_QUEUE_URL: !Ref QueueUrl
+          APPLICATION_SECRET_VERSION: !Ref ApplicationSecretVersion
           META_VERIFY_TOKEN: !Sub "{{resolve:secretsmanager:${ApplicationSecretArn}:SecretString:META_VERIFY_TOKEN}}"
           META_APP_SECRET: !Sub "{{resolve:secretsmanager:${ApplicationSecretArn}:SecretString:META_APP_SECRET}}"
 

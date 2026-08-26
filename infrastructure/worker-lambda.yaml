@@ -20,6 +20,10 @@ Parameters:
   ApplicationSecretArn:
     Type: String
     Description: Secrets Manager JSON secret containing SUPABASE_SERVICE_ROLE_KEY and META_ACCESS_TOKEN.
+  ApplicationSecretVersion:
+    Type: String
+    Default: "1"
+    Description: Change this value after updating the application secret so Lambda refreshes its environment.
   MetaGraphApiVersion:
     Type: String
     AllowedPattern: ^v[0-9]+\.[0-9]+$
@@ -105,6 +109,7 @@ Resources:
       Environment:
         Variables:
           DYNAMODB_TABLE_NAME: !Ref DynamoTableName
+          APPLICATION_SECRET_VERSION: !Ref ApplicationSecretVersion
           SUPABASE_URL: !Ref SupabaseUrl
           SUPABASE_SERVICE_ROLE_KEY: !Sub "{{resolve:secretsmanager:${ApplicationSecretArn}:SecretString:SUPABASE_SERVICE_ROLE_KEY}}"
           META_ACCESS_TOKEN: !Sub "{{resolve:secretsmanager:${ApplicationSecretArn}:SecretString:META_ACCESS_TOKEN}}"
