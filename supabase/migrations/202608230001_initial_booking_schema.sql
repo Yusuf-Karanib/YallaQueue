@@ -1,3 +1,5 @@
+begin;
+
 create extension if not exists btree_gist;
 create extension if not exists pgcrypto;
 
@@ -30,6 +32,7 @@ create table public.appointments (
   customer_phone text not null,
   requested_text text not null,
   scheduled_for timestamptz not null,
+  ends_at timestamptz not null,
   service_date date not null,
   duration_minutes smallint not null check (duration_minutes between 5 and 240),
   queue_number integer not null check (queue_number > 0),
@@ -38,17 +41,11 @@ create table public.appointments (
   customer_notified_at timestamptz,
   barber_notified_at timestamptz,
   created_at timestamptz not null default now(),
-  slot tstzrange generated always as (
-    tstzrange(
-      scheduled_for,
-      scheduled_for + make_interval(mins => duration_minutes),
-      '[)'
-    )
-  ) stored,
+  check (ends_at > scheduled_for),
   unique (shop_id, service_date, queue_number),
   exclude using gist (
     shop_id with =,
-    slot with &&
+    tstzrange(scheduled_for, ends_at, '[)') with &&
   ) where (status = 'confirmed')
 );
 
@@ -204,6 +201,7 @@ begin
       customer_phone,
       requested_text,
       scheduled_for,
+      ends_at,
       service_date,
       duration_minutes,
       queue_number
@@ -213,6 +211,7 @@ begin
       p_customer_phone_number,
       p_message_text,
       p_scheduled_for,
+      p_scheduled_for + make_interval(mins => v_shop.default_appointment_minutes),
       v_service_date,
       v_shop.default_appointment_minutes,
       v_next_queue_number
@@ -306,3 +305,5 @@ grant execute on function public.reserve_whatsapp_booking(text, text, text, text
   to service_role;
 grant execute on function public.mark_booking_notification(uuid, text)
   to service_role;
+
+commit;
