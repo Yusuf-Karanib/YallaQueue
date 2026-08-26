@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: Public signed Meta webhook hosted as a throttled AWS Lambda container.
+Description: Public signed Meta webhook hosted as an AWS Lambda container.
 
 Parameters:
   WebImageUri:
@@ -18,12 +18,6 @@ Parameters:
     Type: String
     Default: yallaqueue-production-web
     AllowedPattern: "[A-Za-z0-9-_]{1,64}"
-  ReservedConcurrency:
-    Type: Number
-    Default: 5
-    MinValue: 1
-    MaxValue: 20
-    Description: Caps webhook concurrency and limits unexpected spend.
   AlarmTopicArn:
     Type: String
     Default: ""
@@ -78,7 +72,6 @@ Resources:
         - x86_64
       MemorySize: 1024
       Timeout: 15
-      ReservedConcurrentExecutions: !Ref ReservedConcurrency
       Role: !GetAtt WebExecutionRole.Arn
       Environment:
         Variables:
