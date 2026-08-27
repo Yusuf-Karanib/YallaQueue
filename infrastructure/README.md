@@ -9,14 +9,15 @@ Use `eu-central-1` (Frankfurt) for the pilot. As of 2026-08-23, AWS still marks 
 Deployment order:
 
 1. Deploy `container-registry.yaml` to create immutable, scan-on-push ECR repositories.
-2. Deploy QueueCraft's `infrastructure/cloudformation.yaml`, including an `AlarmEmail`.
-3. Create one Secrets Manager JSON secret containing `META_VERIFY_TOKEN`, `META_APP_SECRET`, `SUPABASE_SECRET_KEY`, and `META_ACCESS_TOKEN`.
-4. Build `Dockerfile.web-lambda` and `Dockerfile.worker-lambda` for `linux/amd64` with provenance disabled, then push commit-tagged images to their ECR repositories. Lambda requires a single-architecture image manifest.
-5. Deploy `web-lambda.yaml` using the web image digest and QueueCraft producer outputs.
-6. Verify the SES sender email or domain.
-7. Deploy `worker-lambda.yaml` using the worker image digest and QueueCraft consumer outputs.
-8. Pass QueueCraft's `AlarmTopicArn` to both application stacks.
-9. Review the estimated Lambda, CloudWatch, ECR, SQS, DynamoDB, Secrets Manager, SNS, and SES costs.
+2. Deploy `github-actions-ecr.yaml` if container images will be built by GitHub Actions instead of a trusted local machine.
+3. Deploy QueueCraft's `infrastructure/cloudformation.yaml`, including an `AlarmEmail`.
+4. Create one Secrets Manager JSON secret containing `META_VERIFY_TOKEN`, `META_APP_SECRET`, `SUPABASE_SECRET_KEY`, and `META_ACCESS_TOKEN`.
+5. Build `Dockerfile.web-lambda` and `Dockerfile.worker-lambda` for `linux/amd64` with provenance disabled, then push commit-tagged images to their ECR repositories. Lambda requires a single-architecture image manifest. The manual `Publish worker image` GitHub workflow can build the worker without permanent AWS credentials.
+6. Deploy `web-lambda.yaml` using the web image digest and QueueCraft producer outputs.
+7. Verify the SES sender email or domain.
+8. Deploy `worker-lambda.yaml` using the worker image digest and QueueCraft consumer outputs.
+9. Pass QueueCraft's `AlarmTopicArn` to both application stacks.
+10. Review the estimated Lambda, CloudWatch, ECR, SQS, DynamoDB, Secrets Manager, SNS, and SES costs.
 
 The webhook runs behind a stable Lambda Function URL and checks Meta's signature before publishing. SQS starts the booking worker only when a job exists, so there is no continuously running server or public IPv4 charge.
 

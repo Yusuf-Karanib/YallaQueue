@@ -1,0 +1,72 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Short-lived GitHub Actions access for publishing YallaQueue images to private ECR repositories.
+
+Parameters:
+  GitHubOwner:
+    Type: String
+    Default: Yusuf-Karanib
+  GitHubRepository:
+    Type: String
+    Default: YallaQueue
+  GitHubBranch:
+    Type: String
+    Default: main
+  WebRepositoryName:
+    Type: String
+    Default: yallaqueue-production-web
+  WorkerRepositoryName:
+    Type: String
+    Default: yallaqueue-production-worker
+
+Resources:
+  GitHubOidcProvider:
+    Type: AWS::IAM::OIDCProvider
+    Properties:
+      Url: https://token.actions.githubusercontent.com
+      ClientIdList:
+        - sts.amazonaws.com
+
+  GitHubActionsEcrRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: yallaqueue-github-actions-ecr
+      MaxSessionDuration: 3600
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: !Ref GitHubOidcProvider
+            Action: sts:AssumeRoleWithWebIdentity
+            Condition:
+              StringEquals:
+                token.actions.githubusercontent.com:aud: sts.amazonaws.com
+                token.actions.githubusercontent.com:sub: !Sub "repo:${GitHubOwner}/${GitHubRepository}:ref:refs/heads/${GitHubBranch}"
+      Policies:
+        - PolicyName: PublishYallaQueueImages
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: GetEcrLoginToken
+                Effect: Allow
+                Action: ecr:GetAuthorizationToken
+                Resource: "*"
+              - Sid: PublishImages
+                Effect: Allow
+                Action:
+                  - ecr:BatchCheckLayerAvailability
+                  - ecr:GetDownloadUrlForLayer
+                  - ecr:BatchGetImage
+                  - ecr:InitiateLayerUpload
+                  - ecr:UploadLayerPart
+                  - ecr:CompleteLayerUpload
+                  - ecr:PutImage
+                Resource:
+                  - !Sub "arn:${AWS::Partition}:ecr:${AWS::Region}:${AWS::AccountId}:repository/${WebRepositoryName}"
+                  - !Sub "arn:${AWS::Partition}:ecr:${AWS::Region}:${AWS::AccountId}:repository/${WorkerRepositoryName}"
+
+Outputs:
+  GitHubActionsEcrRoleArn:
+    Value: !GetAtt GitHubActionsEcrRole.Arn
+  GitHubOidcProviderArn:
+    Value: !Ref GitHubOidcProvider
