@@ -4,7 +4,7 @@ const workerDependencyConfigSchema = z.object({
   AWS_REGION: z.string().trim().min(1),
   DYNAMODB_TABLE_NAME: z.string().trim().min(3),
   SUPABASE_URL: z.url(),
-  SUPABASE_SERVICE_ROLE_KEY: z.string().trim().min(20),
+  SUPABASE_SECRET_KEY: z.string().trim().min(20),
   META_ACCESS_TOKEN: z.string().trim().min(20),
   META_GRAPH_API_VERSION: z.string().trim().regex(/^v\d+\.\d+$/),
   SES_FROM_EMAIL: z.email(),

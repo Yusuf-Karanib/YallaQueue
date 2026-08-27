@@ -10,7 +10,7 @@ Deployment order:
 
 1. Deploy `container-registry.yaml` to create immutable, scan-on-push ECR repositories.
 2. Deploy QueueCraft's `infrastructure/cloudformation.yaml`, including an `AlarmEmail`.
-3. Create one Secrets Manager JSON secret containing `META_VERIFY_TOKEN`, `META_APP_SECRET`, `SUPABASE_SERVICE_ROLE_KEY`, and `META_ACCESS_TOKEN`.
+3. Create one Secrets Manager JSON secret containing `META_VERIFY_TOKEN`, `META_APP_SECRET`, `SUPABASE_SECRET_KEY`, and `META_ACCESS_TOKEN`.
 4. Build `Dockerfile.web-lambda` and `Dockerfile.worker-lambda` for `linux/amd64` with provenance disabled, then push commit-tagged images to their ECR repositories. Lambda requires a single-architecture image manifest.
 5. Deploy `web-lambda.yaml` using the web image digest and QueueCraft producer outputs.
 6. Verify the SES sender email or domain.

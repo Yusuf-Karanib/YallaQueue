@@ -19,7 +19,7 @@ Parameters:
     AllowedPattern: ^https://.+$
   ApplicationSecretArn:
     Type: String
-    Description: Secrets Manager JSON secret containing SUPABASE_SERVICE_ROLE_KEY and META_ACCESS_TOKEN.
+    Description: Secrets Manager JSON secret containing SUPABASE_SECRET_KEY and META_ACCESS_TOKEN.
   ApplicationSecretVersion:
     Type: String
     Default: "1"
@@ -111,7 +111,7 @@ Resources:
           DYNAMODB_TABLE_NAME: !Ref DynamoTableName
           APPLICATION_SECRET_VERSION: !Ref ApplicationSecretVersion
           SUPABASE_URL: !Ref SupabaseUrl
-          SUPABASE_SERVICE_ROLE_KEY: !Sub "{{resolve:secretsmanager:${ApplicationSecretArn}:SecretString:SUPABASE_SERVICE_ROLE_KEY}}"
+          SUPABASE_SECRET_KEY: !Sub "{{resolve:secretsmanager:${ApplicationSecretArn}:SecretString:SUPABASE_SECRET_KEY}}"
           META_ACCESS_TOKEN: !Sub "{{resolve:secretsmanager:${ApplicationSecretArn}:SecretString:META_ACCESS_TOKEN}}"
           META_GRAPH_API_VERSION: !Ref MetaGraphApiVersion
           SES_FROM_EMAIL: !Ref SesFromEmail

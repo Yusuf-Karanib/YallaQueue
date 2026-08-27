@@ -6,7 +6,7 @@ const validEnvironment = {
   SQS_QUEUE_URL: "https://sqs.me-central-1.amazonaws.com/123/jobs",
   DYNAMODB_TABLE_NAME: "queuecraft-jobs",
   SUPABASE_URL: "https://example.supabase.co",
-  SUPABASE_SERVICE_ROLE_KEY: "service-role-secret-value",
+  SUPABASE_SECRET_KEY: "sb_secret_test-value-long-enough",
   META_ACCESS_TOKEN: "meta-access-token-value",
   META_GRAPH_API_VERSION: "v25.0",
   SES_FROM_EMAIL: "bookings@example.com",

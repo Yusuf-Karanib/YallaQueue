@@ -19,7 +19,7 @@ const ses = new SESv2Client({ region: config.AWS_REGION });
 
 const repository = createSupabaseBookingRepository(
   config.SUPABASE_URL,
-  config.SUPABASE_SERVICE_ROLE_KEY,
+  config.SUPABASE_SECRET_KEY,
 );
 const whatsapp = new MetaWhatsAppMessenger(
   config.META_ACCESS_TOKEN,
