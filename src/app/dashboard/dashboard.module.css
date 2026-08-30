@@ -1,0 +1,370 @@
+.page {
+  min-height: 100vh;
+  padding: 0 max(20px, calc((100vw - 1180px) / 2)) 72px;
+  background:
+    radial-gradient(circle at 90% 5%, rgb(65 181 115 / 13%), transparent 28%),
+    #f5f8f6;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 82px;
+  border-bottom: 1px solid #dfe8e2;
+}
+
+.brand,
+.shopName,
+.hero p,
+.sectionHeading p,
+.emptyState p {
+  margin: 0;
+}
+
+.brand {
+  color: #11663b;
+  font-size: 1.05rem;
+  font-weight: 850;
+}
+
+.shopName {
+  margin-top: 3px;
+  color: #607068;
+  font-size: 0.86rem;
+}
+
+.signOut,
+.secondaryButton {
+  padding: 10px 15px;
+  border: 1px solid #cbd9d0;
+  border-radius: 9px;
+  background: #fff;
+  color: #263b30;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+}
+
+.hero {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 64px 0 34px;
+}
+
+.hero h1 {
+  margin-bottom: 12px;
+  font-size: clamp(2.4rem, 6vw, 4.6rem);
+}
+
+.hero > div > p:last-child {
+  color: #5d6c64;
+}
+
+.eyebrow {
+  margin: 0 0 10px;
+  color: #37704e;
+  font-size: 0.76rem;
+  font-weight: 850;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.liveBadge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 13px;
+  border: 1px solid #c7e8d3;
+  border-radius: 999px;
+  background: #effaf3;
+  color: #11663b;
+  font-size: 0.84rem;
+  font-weight: 800;
+}
+
+.liveBadge span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #20a85e;
+  box-shadow: 0 0 0 4px rgb(32 168 94 / 12%);
+}
+
+.error,
+.success {
+  margin: 0 0 18px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-size: 0.92rem;
+}
+
+.error {
+  border: 1px solid #f0b7b7;
+  background: #fff3f3;
+  color: #8f2323;
+}
+
+.success {
+  border: 1px solid #bfe3cc;
+  background: #f0faf4;
+  color: #11663b;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.stats article {
+  display: grid;
+  gap: 6px;
+  padding: 24px;
+  border: 1px solid #dce6df;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 12px 30px rgb(25 67 44 / 5%);
+}
+
+.stats span,
+.stats small,
+.appointment span,
+.appointment small,
+.statusForm label {
+  color: #64736b;
+}
+
+.stats span {
+  font-size: 0.82rem;
+  font-weight: 750;
+}
+
+.stats strong {
+  color: #173e29;
+  font-size: 2.4rem;
+}
+
+.queueSection {
+  margin-top: 42px;
+}
+
+.sectionHeading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 18px;
+}
+
+.sectionHeading h2 {
+  margin: 0;
+  font-size: 1.6rem;
+}
+
+.sectionHeading > p {
+  color: #64736b;
+  font-size: 0.88rem;
+}
+
+.appointmentList {
+  display: grid;
+  gap: 12px;
+}
+
+.appointment {
+  display: grid;
+  grid-template-columns: 92px minmax(130px, 1fr) minmax(150px, 1fr) minmax(250px, 1.3fr);
+  align-items: center;
+  gap: 20px;
+  padding: 18px 20px;
+  border: 1px solid #dce6df;
+  border-radius: 15px;
+  background: #fff;
+}
+
+.queueNumber {
+  display: grid;
+  justify-items: center;
+  padding-right: 18px;
+  border-right: 1px solid #e4ebe7;
+}
+
+.queueNumber span {
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.queueNumber strong {
+  color: #11663b;
+  font-size: 1.8rem;
+}
+
+.appointmentTime,
+.notificationState {
+  display: grid;
+  gap: 4px;
+}
+
+.appointmentTime strong {
+  font-size: 1.05rem;
+}
+
+.appointmentTime span,
+.notificationState small {
+  font-size: 0.82rem;
+}
+
+.statusPill {
+  width: fit-content;
+  padding: 5px 9px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.confirmed {
+  background: #eaf7ef;
+  color: #12683c !important;
+}
+
+.completed {
+  background: #e8f0ff;
+  color: #315ca8 !important;
+}
+
+.cancelled,
+.no_show {
+  background: #f4efef;
+  color: #745757 !important;
+}
+
+.statusForm {
+  display: grid;
+  gap: 6px;
+}
+
+.statusForm label {
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.statusForm div {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+}
+
+.statusForm select,
+.statusForm button {
+  min-height: 40px;
+  border-radius: 8px;
+  font: inherit;
+}
+
+.statusForm select {
+  min-width: 0;
+  padding: 0 10px;
+  border: 1px solid #cbd9d0;
+  background: #fbfdfc;
+}
+
+.statusForm button {
+  padding: 0 14px;
+  border: 0;
+  background: #173e29;
+  color: #fff;
+  cursor: pointer;
+  font-weight: 750;
+}
+
+.emptyState,
+.emptyAccess {
+  padding: 40px;
+  border: 1px dashed #cbd9d0;
+  border-radius: 16px;
+  background: #fff;
+  text-align: center;
+}
+
+.emptyState p,
+.emptyAccess p {
+  margin-top: 7px;
+  color: #64736b;
+}
+
+.centeredPage {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  padding: 24px;
+  background: #f5f8f6;
+}
+
+.emptyAccess {
+  width: min(100%, 520px);
+}
+
+.emptyAccess h1 {
+  font-size: 2rem;
+}
+
+.emptyAccess form {
+  margin-top: 24px;
+}
+
+@media (max-width: 840px) {
+  .appointment {
+    grid-template-columns: 72px 1fr 1fr;
+  }
+
+  .statusForm {
+    grid-column: 2 / -1;
+  }
+}
+
+@media (max-width: 600px) {
+  .page {
+    padding-inline: 16px;
+  }
+
+  .hero {
+    align-items: flex-start;
+    flex-direction: column;
+    padding-top: 42px;
+  }
+
+  .stats {
+    grid-template-columns: 1fr;
+  }
+
+  .stats article {
+    grid-template-columns: 1fr auto;
+    align-items: center;
+  }
+
+  .stats small {
+    grid-column: 1 / -1;
+  }
+
+  .sectionHeading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .appointment {
+    grid-template-columns: 62px 1fr;
+  }
+
+  .queueNumber {
+    grid-row: span 2;
+  }
+
+  .notificationState,
+  .statusForm {
+    grid-column: 2;
+  }
+}

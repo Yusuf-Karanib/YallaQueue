@@ -13,7 +13,8 @@ Deployment order:
 3. Deploy QueueCraft's `infrastructure/cloudformation.yaml`, including an `AlarmEmail`.
 4. Create one Secrets Manager JSON secret containing `META_VERIFY_TOKEN`, `META_APP_SECRET`, `SUPABASE_SECRET_KEY`, and `META_ACCESS_TOKEN`.
 5. Build `Dockerfile.web-lambda` and `Dockerfile.worker-lambda` for `linux/amd64` with provenance disabled, then push commit-tagged images to their ECR repositories. Lambda requires a single-architecture image manifest. The manual `Publish worker image` GitHub workflow can build the worker without permanent AWS credentials.
-6. Deploy `web-lambda.yaml` using the web image digest and QueueCraft producer outputs.
+6. Deploy `web-lambda.yaml` using the web image digest, QueueCraft producer outputs,
+   Supabase project URL, and Supabase publishable key.
 7. Verify the SES sender email or domain.
 8. Deploy `worker-lambda.yaml` using the worker image digest and QueueCraft consumer outputs.
 9. Pass QueueCraft's `AlarmTopicArn` to both application stacks.

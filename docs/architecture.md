@@ -27,8 +27,9 @@ Meta signed webhook --> AWS Lambda Function URL --> Next.js /api/webhook
 - SQS holds unfinished work.
 - DynamoDB is used only by QueueCraft for worker leases and completed-job detection.
 - Meta message IDs connect webhook retries to the same logical job.
-- The public Lambda endpoint can only enqueue jobs. It cannot read bookings,
-  send WhatsApp replies, or send email.
+- The public Lambda endpoint can enqueue jobs and serve the authenticated shop
+  dashboard. Dashboard database requests use a Supabase user session and row-level
+  security; the Lambda never receives the Supabase service-role key.
 - The booking worker costs nothing while the queue is empty. SQS wakes it only
   when a booking job arrives.
 
@@ -43,5 +44,6 @@ Meta signed webhook --> AWS Lambda Function URL --> Next.js /api/webhook
 
 - Natural-language booking requests are English only.
 - Appointment length is fixed per shop.
-- There is no barber dashboard by design; the barber receives email alerts.
+- Dashboard access is invitation-only. Public shop self-service onboarding is not
+  included yet.
 - Customer and barber notifications are at-least-once. A process crash after a provider accepts a message but before Supabase records it can cause a rare duplicate notification. The appointment itself remains unique.

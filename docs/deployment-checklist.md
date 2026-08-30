@@ -25,7 +25,10 @@ No production deployment should happen until every item is complete.
 ## Supabase
 
 - The initial migration has been applied.
+- The dashboard access migration has been applied.
 - The pilot shop and its working hours have been inserted using a private copy of the example seed.
+- Every dashboard user is assigned to the correct shop in `shop_members`.
+- Dashboard table grants and row-level security policies have been reviewed.
 - The service-role key exists only in the worker environment.
 - Database backups and point-in-time recovery match the pilot's recovery requirements.
 
@@ -35,6 +38,7 @@ No production deployment should happen until every item is complete.
 - The current Next.js security release has been checked immediately before deployment.
 - The web process and worker process are deployed separately.
 - `/api/health` returns `200` from the live Lambda URL.
+- An assigned shop user can sign in, view only that shop, and update an appointment status.
 - The SQS event source is enabled with partial-batch failure reporting.
 - A signed test webhook reaches SQS and produces one Supabase appointment.
 - The customer receives one WhatsApp confirmation and the barber receives one email.

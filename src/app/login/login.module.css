@@ -1,0 +1,99 @@
+.page {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  padding: 24px;
+  background:
+    radial-gradient(circle at 10% 15%, rgb(63 177 112 / 16%), transparent 30%),
+    linear-gradient(145deg, #f6faf7 0%, #eef5f1 100%);
+}
+
+.panel {
+  width: min(100%, 440px);
+  padding: clamp(28px, 7vw, 48px);
+  border: 1px solid #d7e5dc;
+  border-radius: 24px;
+  background: #fff;
+  box-shadow: 0 24px 70px rgb(20 64 39 / 12%);
+}
+
+.brand {
+  color: #11663b;
+  font-size: 1.1rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.eyebrow {
+  margin: 38px 0 8px;
+  color: #3e6e53;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.panel h1 {
+  margin-bottom: 10px;
+  font-size: clamp(2rem, 8vw, 3rem);
+}
+
+.intro {
+  margin: 0;
+  color: #5d6c64;
+}
+
+.error {
+  margin: 24px 0 0;
+  padding: 12px 14px;
+  border: 1px solid #f0b7b7;
+  border-radius: 10px;
+  background: #fff3f3;
+  color: #8f2323;
+  font-size: 0.92rem;
+}
+
+.form {
+  display: grid;
+  gap: 10px;
+  margin-top: 28px;
+}
+
+.form label {
+  margin-top: 8px;
+  color: #263b30;
+  font-size: 0.9rem;
+  font-weight: 750;
+}
+
+.form input {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 14px;
+  border: 1px solid #c9d8cf;
+  border-radius: 10px;
+  background: #fbfdfc;
+  color: #14201a;
+  font: inherit;
+}
+
+.form input:focus {
+  border-color: #16894e;
+  outline: 3px solid rgb(22 137 78 / 14%);
+}
+
+.form button {
+  min-height: 50px;
+  margin-top: 18px;
+  border: 0;
+  border-radius: 10px;
+  background: #11663b;
+  color: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 800;
+}
+
+.form button:hover {
+  background: #0b542f;
+}

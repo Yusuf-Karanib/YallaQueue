@@ -11,6 +11,14 @@ Parameters:
   QueueCraftProducerPolicyArn:
     Type: String
     Description: Producer policy ARN output by the QueueCraft stack.
+  SupabaseUrl:
+    Type: String
+    AllowedPattern: ^https://.+$
+    Description: Public Supabase project URL used by authenticated dashboard requests.
+  SupabasePublishableKey:
+    Type: String
+    NoEcho: true
+    Description: Public Supabase API key used with authenticated row-level security.
   ApplicationSecretArn:
     Type: String
     Description: Secrets Manager JSON secret containing META_VERIFY_TOKEN and META_APP_SECRET.
@@ -83,6 +91,8 @@ Resources:
           APPLICATION_SECRET_VERSION: !Ref ApplicationSecretVersion
           META_VERIFY_TOKEN: !Sub "{{resolve:secretsmanager:${ApplicationSecretArn}:SecretString:META_VERIFY_TOKEN}}"
           META_APP_SECRET: !Sub "{{resolve:secretsmanager:${ApplicationSecretArn}:SecretString:META_APP_SECRET}}"
+          SUPABASE_URL: !Ref SupabaseUrl
+          SUPABASE_PUBLISHABLE_KEY: !Ref SupabasePublishableKey
 
   WebFunctionUrl:
     Type: AWS::Lambda::Url
