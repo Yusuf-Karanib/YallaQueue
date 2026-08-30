@@ -1,0 +1,67 @@
+.card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 22px;
+  padding: 20px 22px;
+  border: 1px solid #cfe0d5;
+  border-radius: 15px;
+  background: linear-gradient(120deg, #ffffff, #eef8f1);
+}
+
+.card h2,
+.card p {
+  margin: 0;
+}
+
+.card h2 {
+  margin-bottom: 6px;
+  color: #173e29;
+  font-size: 1.2rem;
+}
+
+.card > div > p:last-child {
+  color: #5d6c64;
+  font-size: 0.9rem;
+}
+
+.eyebrow {
+  margin-bottom: 7px !important;
+  color: #37704e !important;
+  font-size: 0.7rem !important;
+  font-weight: 850;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.status {
+  flex: 0 0 auto;
+  padding: 8px 11px;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.checking,
+.unsupported {
+  background: #f3f2e9;
+  color: #6d672d;
+}
+
+.ready {
+  background: #e7f7ed;
+  color: #11663b;
+}
+
+.error {
+  background: #fff0f0;
+  color: #8f2323;
+}
+
+@media (max-width: 700px) {
+  .card {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

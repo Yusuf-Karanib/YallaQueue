@@ -12,6 +12,7 @@ import {
 import { createSupabaseServerClient } from "@/src/lib/supabase/server";
 import { logout, updateAppointmentStatus } from "./actions";
 import styles from "./dashboard.module.css";
+import WebMcpTools from "./webmcp-tools";
 
 export const metadata: Metadata = {
   title: "Dashboard",
@@ -144,6 +145,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           <span /> Live
         </div>
       </section>
+
+      <WebMcpTools />
 
       {error ? (
         <p className={styles.error} role="alert">

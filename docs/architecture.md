@@ -30,6 +30,9 @@ Meta signed webhook --> AWS Lambda Function URL --> Next.js /api/webhook
 - The public Lambda endpoint can enqueue jobs and serve the authenticated shop
   dashboard. Dashboard database requests use a Supabase user session and row-level
   security; the Lambda never receives the Supabase service-role key.
+- The signed-in dashboard registers WebMCP tools in the browser. Tool calls reuse
+  the active login through protected same-origin routes, return minimal queue data,
+  and remain limited by the same row-level security policies.
 - The booking worker costs nothing while the queue is empty. SQS wakes it only
   when a booking job arrives.
 

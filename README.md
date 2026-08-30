@@ -13,6 +13,7 @@ YallaQueue is a WhatsApp appointment and queue system for a UAE barbershop pilot
 - WhatsApp customer confirmations
 - AWS SES email alerts for the barber
 - A private shop dashboard with Supabase login, upcoming appointments, and status controls
+- Browser-native WebMCP tools for reading the live queue and updating statuses
 - Production templates for immutable container registries, Lambda web and
   worker functions, alarms, logs, and least-privilege roles
 - Automated tests with no real cloud calls
@@ -44,5 +45,21 @@ npm run lint
 npm run typecheck
 npm run build
 ```
+
+## WebMCP demo
+
+The signed-in dashboard registers two tools:
+
+- `get_queue_summary` reads today's and upcoming queue without customer phone numbers.
+- `update_queue_status` changes one appointment after the owner asks for it.
+
+Open the deployed dashboard in ChatGPT's in-app browser, or enable
+`chrome://flags/#enable-webmcp-testing` in Chrome. Try:
+
+1. `Summarize today's queue.`
+2. `Mark queue 1 completed.`
+
+Every tool call re-checks the login, shop membership, input, and Supabase
+row-level security.
 
 See `docs/architecture.md` for the system design and `docs/deployment-checklist.md` before using a real barbershop account.
