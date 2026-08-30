@@ -124,7 +124,7 @@ queue together with their agent.”
 - [x] Public source repository
 - [x] WebMCP implementation added during the submission period
 - [x] Project description and testing instructions
-- [ ] Visible open-source license in the repository
+- [x] Visible open-source license in the repository
 - [ ] Public YouTube demo shorter than three minutes with audio
 - [ ] Private judge credentials entered on Devpost
 - [ ] Final Devpost submission saved before September 3, 2026 at 1:00 PM PT
