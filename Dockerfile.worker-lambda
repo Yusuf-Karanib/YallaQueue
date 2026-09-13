@@ -8,7 +8,6 @@ RUN ./node_modules/.bin/esbuild src/worker/lambda.ts --bundle --platform=node --
 
 FROM public.ecr.aws/lambda/nodejs:22
 RUN dnf install -y --releasever 2023.12.20260831 \
-      openssl-libs-3.5.7-2.amzn2023.0.2 \
       openssl-snapsafe-libs-3.5.7-2.amzn2023.0.2 \
       openssl-fips-provider-latest-3.5.7-2.amzn2023.0.2 \
     && dnf clean all
