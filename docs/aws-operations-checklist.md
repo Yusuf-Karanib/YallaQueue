@@ -41,9 +41,10 @@ values in this file.
   schedule.
 - Tag resources with project, environment, and owner. Include retained and
   manually created resources in teardown reviews.
-- Start the public web Lambda with the template's small reserved-concurrency
-  value, measure normal traffic, and change it deliberately. Alarm on Lambda
-  throttles and errors. Reserved concurrency is not a request budget.
+- Leave reserved concurrency at zero when the account quota cannot support a
+  function reservation. After raising the quota, enable a measured value and
+  test overload handling. Alarm on Lambda throttles and errors. Reserved
+  concurrency is not a request budget.
 - Estimate Secrets Manager, provisioned DynamoDB, CloudWatch alarms and logs,
   ECR storage and scanning, SQS retries, SNS, SES, data transfer, and any edge
   service. An idle worker does not make these costs zero.

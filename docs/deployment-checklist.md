@@ -21,9 +21,9 @@ No production deployment should happen until every item is complete.
   trust is limited to the expected numeric owner and repository IDs and `main`.
 - The public webhook uses the Lambda Function URL produced by `web-lambda.yaml`, not the stale Replit snapshot.
 - The web process has only `sqs:SendMessage` permission.
-- The public web Lambda has a measured reserved-concurrency ceiling, and the
-  team has tested overload and `429` handling. This is not treated as a budget
-  or request-rate limit.
+- Reserved concurrency is enabled only when the account quota can retain AWS's
+  required unreserved capacity. If enabled, overload and `429` handling have
+  been tested. It is not treated as a budget or request-rate limit.
 - The web throttle alarm reaches a named operator through the supplied alarm
   topic, and its response runbook distinguishes legitimate load from abuse.
 - The Lambda worker has only the QueueCraft consumer permissions plus `ses:SendEmail` for the approved sender identity.

@@ -28,8 +28,10 @@ Deployment order:
 4. Create one Secrets Manager JSON secret containing `META_VERIFY_TOKEN`, `META_APP_SECRET`, `SUPABASE_SECRET_KEY`, and `META_ACCESS_TOKEN`.
 5. Build `Dockerfile.web-lambda` and `Dockerfile.worker-lambda` for `linux/amd64` with provenance disabled, then push commit-tagged images to their ECR repositories. Lambda requires a single-architecture image manifest. The manual `Publish worker image` GitHub workflow can build the worker without permanent AWS credentials.
 6. Deploy `web-lambda.yaml` using the web image digest, QueueCraft producer
-   outputs, Supabase project URL, Supabase publishable key, and a measured
-   `ReservedConcurrentExecutions` ceiling. The pilot default is five.
+   outputs, Supabase project URL, and Supabase publishable key. The
+   `ReservedConcurrentExecutions` default is zero because accounts with the
+   minimum Lambda quota cannot reserve capacity. Set a measured positive value
+   only after confirming the account has enough unreserved concurrency.
 7. Verify the SES sender email or domain.
 8. Deploy `worker-lambda.yaml` using the worker image digest and QueueCraft consumer outputs.
    The source SQS queue visibility timeout must be at least six times the
@@ -44,7 +46,7 @@ notification target. Without a topic, errors remain visible only in CloudWatch
 and the optional throttle alarm and its output are omitted.
 
 The webhook runs behind a stable public Lambda Function URL and checks Meta's
-signature before publishing. The reserved-concurrency setting limits
+signature before publishing. When enabled, the reserved-concurrency setting limits
 simultaneous web execution, which helps contain compute growth and protects
 account concurrency. It is not a request-rate limiter or a hard spending
 budget; excess requests can receive `429` responses, and other AWS services can

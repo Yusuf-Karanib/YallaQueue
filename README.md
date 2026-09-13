@@ -17,7 +17,7 @@ YallaQueue is a WhatsApp appointment and queue system for a UAE barbershop pilot
 - A private shop dashboard with Supabase login, upcoming appointments, and status controls
 - Browser-native WebMCP tools for reading the live queue and updating statuses
 - AWS deployment templates for immutable container registries, Lambda web and
-  worker functions, a public-web concurrency ceiling, alarms, logs, and
+  worker functions, an optional public-web concurrency ceiling, alarms, logs, and
   least-privilege roles
 - Automated tests with no real cloud calls
 - No customer phone numbers or raw webhook bodies in application logs
