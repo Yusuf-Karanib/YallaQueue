@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import type { LambdaSqsEvent } from "queuecraft";
+import type { LambdaSqsEvent } from "@yusufkaranib/queuecraft";
 import { createLambdaWorkerHandler } from "./lambda-handler";
 
 const event: LambdaSqsEvent = { Records: [] };

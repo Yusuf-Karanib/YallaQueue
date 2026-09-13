@@ -27,21 +27,32 @@ Meta signed webhook --> AWS Lambda Function URL --> Next.js /api/webhook
 - SQS holds unfinished work.
 - DynamoDB is used only by QueueCraft for worker leases and completed-job detection.
 - Meta message IDs connect webhook retries to the same logical job.
-- The public Lambda endpoint can enqueue jobs and serve the authenticated shop
-  dashboard. Dashboard database requests use a Supabase user session and row-level
-  security; the Lambda never receives the Supabase service-role key.
+- The public web Lambda can enqueue jobs and serve the authenticated shop
+  dashboard. Dashboard database requests use a Supabase user session and
+  row-level security. Only this web Lambda lacks the Supabase service-role key;
+  it receives the publishable key. The private worker Lambda receives the
+  service-role key because it performs server-side booking work.
 - The signed-in dashboard registers WebMCP tools in the browser. Tool calls reuse
   the active login through protected same-origin routes, return minimal queue data,
   and remain limited by the same row-level security policies.
-- The booking worker costs nothing while the queue is empty. SQS wakes it only
-  when a booking job arrives.
+- SQS invokes worker Lambda compute only when a booking job arrives. The idle
+  system can still incur non-Lambda charges, including Secrets Manager,
+  provisioned DynamoDB, CloudWatch alarms and log storage, and ECR storage.
+- The public web Lambda has reserved concurrency to limit simultaneous compute.
+  This can produce `429` responses during overload and is not a full rate limit
+  or spending cap.
 
 ## Booking safety
 
 - The database rejects overlapping confirmed appointments.
 - Queue numbers are allocated inside a database transaction and are unique per shop and day.
 - A WhatsApp message ID can create only one appointment.
+- One phone number can hold at most three future confirmed appointments per
+  shop. The database serializes this check so simultaneous requests cannot
+  bypass it.
 - The worker asks for another time when a request is unclear, outside working hours, or already occupied.
+- Dashboard status changes do not send a WhatsApp message; the operator must
+  contact the customer separately when that is required.
 
 ## Current MVP limits
 

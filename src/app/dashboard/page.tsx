@@ -155,7 +155,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       ) : null}
       {updated ? (
         <p className={styles.success} role="status">
-          Appointment updated.
+          Appointment status updated. No WhatsApp status message was sent.
         </p>
       ) : null}
 
@@ -183,7 +183,10 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             <p className={styles.eyebrow}>Schedule</p>
             <h2>Today and upcoming</h2>
           </div>
-          <p>{shop.default_appointment_minutes}-minute appointments</p>
+          <p>
+            {shop.default_appointment_minutes}-minute appointments. Status
+            changes do not send WhatsApp messages.
+          </p>
         </div>
 
         {appointments.length === 0 ? (
@@ -217,8 +220,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                   </span>
                   <small>
                     {appointment.customer_notified_at
-                      ? "Customer notified"
-                      : "Reply pending"}
+                      ? "Booking confirmation sent"
+                      : "Booking confirmation pending"}
                   </small>
                 </div>
 

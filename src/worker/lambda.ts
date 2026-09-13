@@ -1,6 +1,9 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { SESv2Client } from "@aws-sdk/client-sesv2";
-import { IdempotencyStore, QueueCraftLambdaProcessor } from "queuecraft";
+import {
+  IdempotencyStore,
+  QueueCraftLambdaProcessor,
+} from "@yusufkaranib/queuecraft";
 import { createBookingHandler } from "../booking/handler";
 import { createSupabaseBookingRepository } from "../booking/repository";
 import { SesBarberEmailNotifier } from "../notifications/email";

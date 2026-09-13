@@ -2,7 +2,7 @@ import type {
   LambdaSqsBatchResponse,
   LambdaSqsEvent,
   QueueCraftLambdaProcessor,
-} from "queuecraft";
+} from "@yusufkaranib/queuecraft";
 
 export interface LambdaRuntimeContext {
   getRemainingTimeInMillis(): number;

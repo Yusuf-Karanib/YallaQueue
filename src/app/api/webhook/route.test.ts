@@ -10,16 +10,32 @@ vi.mock("@aws-sdk/client-sqs", () => ({
   SQSClient: vi.fn(),
 }));
 
-vi.mock("queuecraft", () => ({
-  QueueCraftPublisher: vi.fn().mockImplementation(() => ({
-    publish: mocks.publish,
-  })),
+vi.mock("@yusufkaranib/queuecraft", () => ({
+  QueueCraftPublisher: vi.fn(function QueueCraftPublisherMock() {
+    return { publish: mocks.publish };
+  }),
 }));
 
 const appSecret = "test-app-secret";
 
 function signedRequest(payload: unknown): NextRequest {
   const rawBody = JSON.stringify(payload);
+  const signature = crypto
+    .createHmac("sha256", appSecret)
+    .update(rawBody, "utf8")
+    .digest("hex");
+
+  return new NextRequest("http://localhost/api/webhook", {
+    method: "POST",
+    body: rawBody,
+    headers: {
+      "content-type": "application/json",
+      "x-hub-signature-256": `sha256=${signature}`,
+    },
+  });
+}
+
+function signedRawRequest(rawBody: string): NextRequest {
   const signature = crypto
     .createHmac("sha256", appSecret)
     .update(rawBody, "utf8")
@@ -73,6 +89,47 @@ describe("WhatsApp webhook", () => {
     const response = await POST(request);
 
     expect(response.status).toBe(401);
+    expect(mocks.publish).not.toHaveBeenCalled();
+  });
+
+  it("rejects an oversized declared body before signature work", async () => {
+    const { POST } = await loadRoute();
+    const request = new NextRequest("http://localhost/api/webhook", {
+      method: "POST",
+      body: "{}",
+      headers: { "content-length": String(64 * 1024 + 1) },
+    });
+
+    const response = await POST(request);
+
+    expect(response.status).toBe(413);
+    expect(mocks.publish).not.toHaveBeenCalled();
+  });
+
+  it("stops reading an oversized body when Content-Length is missing", async () => {
+    const { POST } = await loadRoute();
+    const request = signedRawRequest(
+      JSON.stringify({ padding: "x".repeat(64 * 1024) }),
+    );
+
+    const response = await POST(request);
+
+    expect(response.status).toBe(413);
+    expect(mocks.publish).not.toHaveBeenCalled();
+  });
+
+  it("verifies the signature against the exact UTF-8 request bytes", async () => {
+    const { POST } = await loadRoute();
+    const request = signedRawRequest(
+      JSON.stringify({
+        note: "موعد",
+        entry: [{ changes: [{ value: { statuses: [{ id: "wamid.sent" }] } }] }],
+      }),
+    );
+
+    const response = await POST(request);
+
+    expect(response.status).toBe(200);
     expect(mocks.publish).not.toHaveBeenCalled();
   });
 

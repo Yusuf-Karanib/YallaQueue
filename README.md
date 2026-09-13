@@ -1,5 +1,7 @@
 # YallaQueue
 
+[![CI](https://github.com/Yusuf-Karanib/YallaQueue/actions/workflows/ci.yml/badge.svg)](https://github.com/Yusuf-Karanib/YallaQueue/actions/workflows/ci.yml)
+
 YallaQueue is a WhatsApp appointment and queue system for a UAE barbershop pilot.
 
 ## Implemented
@@ -14,15 +16,17 @@ YallaQueue is a WhatsApp appointment and queue system for a UAE barbershop pilot
 - AWS SES email alerts for the barber
 - A private shop dashboard with Supabase login, upcoming appointments, and status controls
 - Browser-native WebMCP tools for reading the live queue and updating statuses
-- Production templates for immutable container registries, Lambda web and
-  worker functions, alarms, logs, and least-privilege roles
+- AWS deployment templates for immutable container registries, Lambda web and
+  worker functions, a public-web concurrency ceiling, alarms, logs, and
+  least-privilege roles
 - Automated tests with no real cloud calls
 - No customer phone numbers or raw webhook bodies in application logs
 
 ## Pilot deployment
 
-The WhatsApp booking path is live against the Meta test account. A dedicated
-business number is still required before real customers can use it.
+The WhatsApp booking path has been tested against the Meta test account. A
+dedicated business number and the completed deployment checklist are still
+required before real customers can use it.
 
 ## Local setup
 
@@ -31,7 +35,9 @@ business number is still required before real customers can use it.
 3. Run the web process with `npm run dev`.
 4. Run the optional long-polling development worker separately with `npm run worker:local`.
 
-Do not commit `.env.local`, the Supabase service-role key, Meta tokens, or AWS secrets.
+Do not commit `.env.local`, the Supabase service-role key, Meta tokens, or AWS
+secrets. The deployed web Lambda receives only the Supabase publishable key;
+the service-role key belongs only in the private worker Lambda environment.
 
 ## Database
 
@@ -62,4 +68,6 @@ Open the deployed dashboard in ChatGPT's in-app browser, or enable
 Every tool call re-checks the login, shop membership, input, and Supabase
 row-level security.
 
-See `docs/architecture.md` for the system design and `docs/deployment-checklist.md` before using a real barbershop account.
+See `docs/architecture.md` for the system design, then complete
+`docs/aws-operations-checklist.md` and `docs/deployment-checklist.md` before
+using a real barbershop account.

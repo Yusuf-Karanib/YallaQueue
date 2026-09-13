@@ -10,6 +10,7 @@ const reservationRowSchema = z.object({
     "outside_hours",
     "invalid_time",
     "unknown_business",
+    "booking_limit",
   ]),
   booking_id: z.string().uuid().nullable(),
   shop_id: z.string().uuid().nullable(),
@@ -40,6 +41,7 @@ export type ReservationDecision =
       shopName: string;
       shopTimezone: string;
     }
+  | { outcome: "booking_limit" }
   | { outcome: "unknown_business" };
 
 export interface ShopConfig {
@@ -118,8 +120,11 @@ export class SupabaseBookingRepository implements BookingRepository {
 
     const row = parsed.data;
 
-    if (row.outcome === "unknown_business") {
-      return { outcome: "unknown_business" };
+    if (
+      row.outcome === "unknown_business" ||
+      row.outcome === "booking_limit"
+    ) {
+      return { outcome: row.outcome };
     }
 
     if (

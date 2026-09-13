@@ -11,9 +11,11 @@ Parameters:
   GitHubOwnerId:
     Type: String
     Default: "240980687"
+    AllowedPattern: "[0-9]+"
   GitHubRepositoryId:
     Type: String
     Default: "1309140317"
+    AllowedPattern: "[0-9]+"
   GitHubBranch:
     Type: String
     Default: main
@@ -23,10 +25,42 @@ Parameters:
   WorkerRepositoryName:
     Type: String
     Default: yallaqueue-production-worker
+  RoleName:
+    Type: String
+    Default: yallaqueue-github-actions-ecr
+  CreateGitHubOidcProvider:
+    Type: String
+    Default: "true"
+    AllowedValues:
+      - "true"
+      - "false"
+    Description: Set true only when this AWS account does not already have GitHub's OIDC provider.
+  ExistingGitHubOidcProviderArn:
+    Type: String
+    Default: ""
+    Description: Required when CreateGitHubOidcProvider is false.
+
+Conditions:
+  ShouldCreateGitHubOidcProvider: !Equals
+    - !Ref CreateGitHubOidcProvider
+    - "true"
+
+Rules:
+  ExistingProviderArnRequiredWhenNotCreating:
+    RuleCondition: !Equals
+      - !Ref CreateGitHubOidcProvider
+      - "false"
+    Assertions:
+      - Assert: !Not
+          - !Equals
+            - !Ref ExistingGitHubOidcProviderArn
+            - ""
+        AssertDescription: ExistingGitHubOidcProviderArn is required when CreateGitHubOidcProvider is false.
 
 Resources:
   GitHubOidcProvider:
     Type: AWS::IAM::OIDCProvider
+    Condition: ShouldCreateGitHubOidcProvider
     Properties:
       Url: https://token.actions.githubusercontent.com
       ClientIdList:
@@ -35,14 +69,17 @@ Resources:
   GitHubActionsEcrRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: yallaqueue-github-actions-ecr
+      RoleName: !Ref RoleName
       MaxSessionDuration: 3600
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
           - Effect: Allow
             Principal:
-              Federated: !Ref GitHubOidcProvider
+              Federated: !If
+                - ShouldCreateGitHubOidcProvider
+                - !Ref GitHubOidcProvider
+                - !Ref ExistingGitHubOidcProviderArn
             Action: sts:AssumeRoleWithWebIdentity
             Condition:
               StringEquals:
@@ -75,4 +112,8 @@ Outputs:
   GitHubActionsEcrRoleArn:
     Value: !GetAtt GitHubActionsEcrRole.Arn
   GitHubOidcProviderArn:
-    Value: !Ref GitHubOidcProvider
+    Description: GitHub OIDC provider created by or supplied to this stack.
+    Value: !If
+      - ShouldCreateGitHubOidcProvider
+      - !Ref GitHubOidcProvider
+      - !Ref ExistingGitHubOidcProviderArn

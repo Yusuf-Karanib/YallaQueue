@@ -100,7 +100,7 @@ export function extractBookingRequests(payload: unknown): BookingRequest[] {
 }
 
 export function verifyMetaSignature(
-  rawBody: string,
+  rawBody: string | Uint8Array,
   signatureHeader: string | null,
   appSecret: string,
 ): boolean {
@@ -114,10 +114,12 @@ export function verifyMetaSignature(
     return false;
   }
 
-  const expectedDigest = crypto
-    .createHmac("sha256", appSecret)
-    .update(rawBody, "utf8")
-    .digest();
+  const hmac = crypto.createHmac("sha256", appSecret);
+  const expectedDigest = (
+    typeof rawBody === "string"
+      ? hmac.update(rawBody, "utf8")
+      : hmac.update(rawBody)
+  ).digest();
   const receivedDigest = Buffer.from(receivedHex, "hex");
 
   return (

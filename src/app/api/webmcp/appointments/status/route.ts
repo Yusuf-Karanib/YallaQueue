@@ -79,6 +79,7 @@ export async function POST(request: NextRequest) {
         queueNumber: updateResult.data.queue_number,
         serviceDate: updateResult.data.service_date,
         status: updateResult.data.status,
+        whatsappStatusNotificationSent: false,
       },
       { headers: noStoreHeaders },
     );

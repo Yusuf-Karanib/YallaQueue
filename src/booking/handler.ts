@@ -1,5 +1,5 @@
 import type { Message } from "@aws-sdk/client-sqs";
-import type { JobContext, JobHandler } from "queuecraft";
+import type { JobContext, JobHandler } from "@yusufkaranib/queuecraft";
 import { parseBookingJob } from "./job";
 import type { BookingRepository } from "./repository";
 import { parseRequestedBookingTime } from "./time";
@@ -71,6 +71,17 @@ export function createBookingHandler(
         throw new Error(
           "The receiving WhatsApp number is not mapped to an active shop.",
         );
+      }
+
+      if (decision.outcome === "booking_limit") {
+        throwIfAborted(context.signal);
+        await dependencies.whatsapp.sendText({
+          businessPhoneNumberId: job.businessPhoneNumberId,
+          customerPhoneNumber: job.customerPhoneNumber,
+          text: `You already have 3 active appointments at ${shop.name}. Please cancel or complete one before booking another.`,
+          signal: context.signal,
+        });
+        return;
       }
 
       throwIfAborted(context.signal);

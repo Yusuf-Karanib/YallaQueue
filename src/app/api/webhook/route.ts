@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { SQSClient } from "@aws-sdk/client-sqs";
-import { QueueCraftPublisher } from "queuecraft";
+import { QueueCraftPublisher } from "@yusufkaranib/queuecraft";
 import {
   extractBookingRequests,
   verifyMetaSignature,
@@ -8,6 +8,60 @@ import {
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+const MAX_WEBHOOK_BODY_BYTES = 64 * 1024;
+
+class WebhookBodyTooLargeError extends Error {}
+class InvalidContentLengthError extends Error {}
+
+async function readWebhookBody(req: NextRequest): Promise<Uint8Array> {
+  const contentLength = req.headers.get("content-length");
+
+  if (contentLength !== null) {
+    const normalizedLength = contentLength.trim();
+    if (!/^\d+$/.test(normalizedLength)) {
+      throw new InvalidContentLengthError();
+    }
+
+    const declaredBytes = Number(normalizedLength);
+    if (
+      !Number.isSafeInteger(declaredBytes) ||
+      declaredBytes > MAX_WEBHOOK_BODY_BYTES
+    ) {
+      throw new WebhookBodyTooLargeError();
+    }
+  }
+
+  if (!req.body) {
+    return new Uint8Array();
+  }
+
+  const reader = req.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let totalBytes = 0;
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) {
+      break;
+    }
+
+    totalBytes += value.byteLength;
+    if (totalBytes > MAX_WEBHOOK_BODY_BYTES) {
+      await reader.cancel().catch(() => undefined);
+      throw new WebhookBodyTooLargeError();
+    }
+    chunks.push(value);
+  }
+
+  const body = new Uint8Array(totalBytes);
+  let offset = 0;
+  for (const chunk of chunks) {
+    body.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return body;
+}
 
 let publisher: QueueCraftPublisher | null = null;
 
@@ -77,11 +131,25 @@ export function GET(req: NextRequest): NextResponse {
 export async function POST(
   req: NextRequest,
 ): Promise<NextResponse> {
-  let rawBody: string;
+  let rawBodyBytes: Uint8Array;
 
   try {
-    rawBody = await req.text();
+    rawBodyBytes = await readWebhookBody(req);
   } catch (error) {
+    if (error instanceof WebhookBodyTooLargeError) {
+      return NextResponse.json(
+        { ok: false, error: "Webhook body is too large." },
+        { status: 413 },
+      );
+    }
+
+    if (error instanceof InvalidContentLengthError) {
+      return NextResponse.json(
+        { ok: false, error: "Invalid Content-Length header." },
+        { status: 400 },
+      );
+    }
+
     console.error("Unable to read webhook body:", error);
 
     return NextResponse.json(
@@ -90,7 +158,15 @@ export async function POST(
     );
   }
 
-  const signatureHeader = req.headers.get("x-hub-signature-256");
+  let rawBody: string;
+  try {
+    rawBody = new TextDecoder("utf-8", { fatal: true }).decode(rawBodyBytes);
+  } catch {
+    return NextResponse.json(
+      { ok: false, error: "Webhook body must be valid UTF-8." },
+      { status: 400 },
+    );
+  }
 
   if (!rawBody.trim()) {
     console.error("Webhook body was completely empty.");
@@ -101,6 +177,7 @@ export async function POST(
     );
   }
 
+  const signatureHeader = req.headers.get("x-hub-signature-256");
   const appSecret = process.env.META_APP_SECRET;
 
   if (!appSecret) {
@@ -111,7 +188,7 @@ export async function POST(
     );
   }
 
-  if (!verifyMetaSignature(rawBody, signatureHeader, appSecret)) {
+  if (!verifyMetaSignature(rawBodyBytes, signatureHeader, appSecret)) {
     console.error("Webhook signature verification failed.");
 
     return NextResponse.json(

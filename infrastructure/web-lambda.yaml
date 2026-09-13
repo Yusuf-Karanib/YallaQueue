@@ -30,10 +30,16 @@ Parameters:
     Type: String
     Default: yallaqueue-production-web
     AllowedPattern: "[A-Za-z0-9-_]{1,64}"
+  ReservedConcurrentExecutions:
+    Type: Number
+    Default: 5
+    MinValue: 1
+    MaxValue: 100
+    Description: Maximum simultaneous web executions. This limits compute growth but is not a complete spending limit.
   AlarmTopicArn:
     Type: String
     Default: ""
-    Description: Optional SNS topic ARN that receives Lambda error alarms.
+    Description: Optional SNS topic ARN that receives Lambda error and throttle alarms. Supplying it also creates the throttle alarm.
 
 Conditions:
   HasAlarmTopic: !Not
@@ -84,6 +90,7 @@ Resources:
         - x86_64
       MemorySize: 1024
       Timeout: 15
+      ReservedConcurrentExecutions: !Ref ReservedConcurrentExecutions
       Role: !GetAtt WebExecutionRole.Arn
       Environment:
         Variables:
@@ -139,6 +146,27 @@ Resources:
         - - !Ref AlarmTopicArn
         - !Ref AWS::NoValue
 
+  WebThrottleAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: HasAlarmTopic
+    Properties:
+      AlarmName: !Sub "${WebFunctionName}-throttles"
+      AlarmDescription: The public YallaQueue web function rejected invocations at its concurrency ceiling.
+      Namespace: AWS/Lambda
+      MetricName: Throttles
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref WebFunction
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      DatapointsToAlarm: 1
+      Threshold: 0
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions:
+        - !Ref AlarmTopicArn
+
 Outputs:
   WebFunctionName:
     Value: !Ref WebFunction
@@ -153,3 +181,9 @@ Outputs:
     Value: !Ref WebLogGroup
   WebErrorAlarmName:
     Value: !Ref WebErrorAlarm
+  WebThrottleAlarmName:
+    Condition: HasAlarmTopic
+    Value: !Ref WebThrottleAlarm
+  ReservedConcurrentExecutions:
+    Description: Concurrency ceiling applied to the public web function.
+    Value: !Ref ReservedConcurrentExecutions

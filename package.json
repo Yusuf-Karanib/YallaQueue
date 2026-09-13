@@ -22,9 +22,9 @@
     "@aws-sdk/client-sqs": "^3.1093.0",
     "@supabase/ssr": "^0.12.5",
     "@supabase/supabase-js": "^2.112.3",
+    "@yusufkaranib/queuecraft": "0.3.0",
     "chrono-node": "^2.10.1",
-    "next": "16.3.2",
-    "queuecraft": "https://github.com/Yusuf-Karanib/QueueCraft/archive/43704ed0a296c76a39fec5c2f4540214e43ed3f5.tar.gz",
+    "next": "16.3.3",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "tsx": "^4.23.12",
@@ -32,13 +32,13 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
+    "@types/node": "^22.20.2",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "eslint": "^9",
-    "eslint-config-next": "16.3.2",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "16.3.3",
     "tailwindcss": "^4",
     "typescript": "^5",
-    "vitest": "^3.2.4"
+    "vitest": "^5.0.0"
   }
 }

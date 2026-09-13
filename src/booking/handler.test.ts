@@ -1,5 +1,5 @@
 import type { Message } from "@aws-sdk/client-sqs";
-import type { JobContext } from "queuecraft";
+import type { JobContext } from "@yusufkaranib/queuecraft";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createBookingHandler } from "./handler";
 import type { BookingJob } from "./job";
@@ -130,6 +130,22 @@ describe("createBookingHandler", () => {
 
     expect(sendText).toHaveBeenCalledWith(
       expect.objectContaining({ text: expect.stringContaining("not available") }),
+    );
+    expect(sendBooking).not.toHaveBeenCalled();
+    expect(markNotification).not.toHaveBeenCalled();
+  });
+
+  it("explains the active-booking limit without notifying the barber", async () => {
+    reserve.mockResolvedValue({
+      outcome: "booking_limit",
+    } satisfies ReservationDecision);
+
+    await handler(queueMessage(), jobContext());
+
+    expect(sendText).toHaveBeenCalledWith(
+      expect.objectContaining({
+        text: expect.stringContaining("already have 3 active appointments"),
+      }),
     );
     expect(sendBooking).not.toHaveBeenCalled();
     expect(markNotification).not.toHaveBeenCalled();

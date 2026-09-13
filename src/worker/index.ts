@@ -5,7 +5,7 @@ import {
   IdempotencyStore,
   QueueCraftPoller,
   Semaphore,
-} from "queuecraft";
+} from "@yusufkaranib/queuecraft";
 import { createBookingHandler } from "../booking/handler";
 import { createSupabaseBookingRepository } from "../booking/repository";
 import { SesBarberEmailNotifier } from "../notifications/email";

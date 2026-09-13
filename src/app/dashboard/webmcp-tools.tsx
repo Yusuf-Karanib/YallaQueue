@@ -68,7 +68,7 @@ export default function WebMcpTools() {
               name: "update_queue_status",
               title: "Update an appointment status",
               description:
-                "Change one appointment status by queue number. This modifies the signed-in shop's data. Only call it after the user clearly asks for the change. Omit serviceDate to update today's queue in the shop timezone.",
+                "Change one appointment status by queue number. This modifies the signed-in shop's data but does not send the customer a WhatsApp status message. Only call it after the user clearly asks for the change. Omit serviceDate to update today's queue in the shop timezone.",
               inputSchema: {
                 type: "object",
                 properties: {
@@ -113,7 +113,7 @@ export default function WebMcpTools() {
                 const result = await readJson(response);
                 router.refresh();
                 return textResult(
-                  `Queue ${result.queueNumber} on ${result.serviceDate} is now ${result.status}. The dashboard has been refreshed.`,
+                  `Queue ${result.queueNumber} on ${result.serviceDate} is now ${result.status}. The dashboard has been refreshed. No WhatsApp status message was sent.`,
                 );
               },
             },
